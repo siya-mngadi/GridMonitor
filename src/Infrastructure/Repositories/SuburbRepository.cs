@@ -1,0 +1,73 @@
+﻿using EFCore.BulkExtensions;
+using GridMonitor.Domain.Entities;
+using GridMonitor.Domain.Repositories;
+using GridMonitor.Infrastructure.DataContext;
+using Microsoft.EntityFrameworkCore;
+
+namespace GridMonitor.Infrastructure.Repositories;
+
+public class SuburbRepository : ISuburbRepository
+{
+	private readonly AppDbContext context;
+
+	public SuburbRepository(AppDbContext context)
+	{
+		this.context = context;
+	}
+
+	public IUnitOfWork UnitOfWork => context;
+
+	public async ValueTask<Suburb> GetByEskomIdAsync(int eskomId, CancellationToken ct = default)
+	{
+		return await context.Suburbs
+			.AsNoTracking()
+			.Include(s => s.Municipality)
+			.FirstOrDefaultAsync(s => s.EskomId == eskomId, ct);
+	}
+
+	public async ValueTask<Suburb> GetByIdAsync(int id, CancellationToken ct = default)
+	{
+		return await context.Suburbs
+			.AsNoTracking()
+			.Include(s => s.Municipality)
+			.Include(s => s.Slots)
+			.FirstOrDefaultAsync(s => s.Id == id, ct);
+	}
+
+	public async ValueTask<List<Suburb>> GetByMunicipalityAsync(int municipalityId, CancellationToken ct = default)
+	{
+		return await context.Suburbs
+			.AsNoTracking()
+			.Include(s => s.Municipality)
+			.Where(s => s.MunicipalityId == municipalityId)
+			.ToListAsync(ct);
+	}
+
+	public async ValueTask<List<Suburb>> GetBySearchPhraseAsync(string searchPhrase, int limit, CancellationToken ct = default)
+	{
+		return await context.Suburbs
+			.AsNoTracking()
+			.Include(s => s.Municipality)
+			.Where(s => EF.Functions.ILike(s.Name, $"%{searchPhrase}%") || EF.Functions.ILike(s.Municipality.Name, $"%{searchPhrase}%"))
+			.Take(limit)
+			.ToListAsync(ct);
+	}
+
+	public async ValueTask<int> UpsertAsync(IEnumerable<Suburb> suburbs, CancellationToken ct = default)
+	{
+		var config = new BulkConfig
+		{
+			CalculateStats = true,
+			UpdateByProperties = [nameof(Suburb.EskomId)],
+			PropertiesToIncludeOnUpdate = [
+				nameof(Suburb.Name),
+				nameof(Suburb.MunicipalityId),
+				nameof(Suburb.Total),
+				nameof(Suburb.LastSyncedAt)
+			]
+		};
+		await context.BulkInsertOrUpdateAsync(suburbs, config, cancellationToken: ct);
+
+		return config.StatsInfo?.StatsNumberInserted + config.StatsInfo?.StatsNumberUpdated ?? 0;
+	}
+}

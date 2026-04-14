@@ -1,0 +1,8 @@
+<Solution>
+  <Project Path="src/Api/GridMonitor.Api.csproj" />
+  <Project Path="src/Application/GridMonitor.Application.csproj" />
+  <Project Path="src/Domain/GridMonitor.Domain.csproj" />
+  <Project Path="src/Infrastructure/GridMonitor.Infrastructure.csproj" />
+  <Project Path="src/Worker/GridMonitor.Worker.csproj" />
+  <Project Path="tests/Unit/GridMonitor.Tests.Unit.csproj" />
+</Solution>

@@ -30,7 +30,7 @@ public class ScheduleSlotRepository : IScheduleSlotRepository
 		return await context.ScheduleSlots.FirstOrDefaultAsync(s =>
 			   s.SuburbId == suburbId &&
 			   s.Stage == stage &&
-			   s.WeekDay == dayNumber &&
+			   s.ScheduleDay == dayNumber &&
 			   s.StartTime == startTime, ct);
 	}
 
@@ -40,7 +40,7 @@ public class ScheduleSlotRepository : IScheduleSlotRepository
 		CancellationToken ct = default)
 	{
 		return await context.ScheduleSlots.Where(s => s.SuburbId == suburbId && s.Stage <= stage)
-			  .OrderBy(s => s.WeekDay)
+			  .OrderBy(s => s.ScheduleDay)
 			  .ThenBy(s => s.StartTime)
 			  .ToListAsync(ct);
 	}
@@ -55,7 +55,7 @@ public class ScheduleSlotRepository : IScheduleSlotRepository
 		return await context.ScheduleSlots.Where(s =>
 				s.SuburbId == suburbId &&
 				s.Stage <= currentStage &&
-				s.WeekDay == dayNumber &&
+				s.ScheduleDay == dayNumber &&
 				s.StartTime > afterTime)
 			  .OrderBy(s => s.StartTime)
 			  .ToListAsync(ct);
@@ -65,7 +65,7 @@ public class ScheduleSlotRepository : IScheduleSlotRepository
 	public async ValueTask<int> UpsertSlotAsync(ScheduleSlot slot, CancellationToken ct = default)
 	{
 		var existing = await GetByCompositeKeyAsync(
-			slot.SuburbId, slot.Stage, slot.WeekDay, slot.StartTime, ct);
+			slot.SuburbId, slot.Stage, slot.ScheduleDay, slot.StartTime, ct);
 
 		if (existing is null)
 		{

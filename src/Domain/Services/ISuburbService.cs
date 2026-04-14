@@ -4,6 +4,6 @@ namespace GridMonitor.Domain.Services;
 
 public interface ISuburbService
 {
-	IAsyncEnumerable<Suburb> GetBySearchPhrase(string searchPhrase);
-	IAsyncEnumerable<Municipality> GetMunicipalities(int provinceId);
+	ValueTask<List<Suburb>> GetBySearchPhraseAsync(string searchPhrase, int limit, CancellationToken ct = default);
+	ValueTask<List<Municipality>> GetMunicipalitiesAsync(int provinceId, CancellationToken ct = default);
 }

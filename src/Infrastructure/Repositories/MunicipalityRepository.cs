@@ -32,7 +32,7 @@ public class MunicipalityRepository : IMunicipalityRepository
 			.FirstOrDefaultAsync(m => m.Id == id, ct);
 	}
 
-	public async ValueTask<List<Municipality>> GetByProvince(int provinceId, CancellationToken ct = default)
+	public async ValueTask<List<Municipality>> GetByProvinceAsync(int provinceId, CancellationToken ct = default)
 	{
 		return await context.Municipalities
 			.AsNoTracking()

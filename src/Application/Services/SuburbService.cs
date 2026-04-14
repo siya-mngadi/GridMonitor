@@ -15,13 +15,13 @@ public class SuburbService : ISuburbService
 		this.municipalityRepository = municipalityRepository;
 	}
 
-	public IAsyncEnumerable<Suburb> GetBySearchPhrase(string searchPhrase)
+	public async ValueTask<List<Suburb>> GetBySearchPhraseAsync(string searchPhrase, int limit, CancellationToken ct = default)
 	{
-		return suburbRepository.GetBySearchPhrase(searchPhrase);
+		return await suburbRepository.GetBySearchPhraseAsync(searchPhrase, limit, ct);
 	}
 
-	public IAsyncEnumerable<Municipality> GetMunicipalities(int provinceId)
+	public async ValueTask<List<Municipality>> GetMunicipalitiesAsync(int provinceId, CancellationToken ct = default)
 	{
-		return municipalityRepository.GetByProvince(provinceId);
+		return await municipalityRepository.GetByProvinceAsync(provinceId, ct);
 	}
 }

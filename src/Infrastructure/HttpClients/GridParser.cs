@@ -1,23 +1,31 @@
 ﻿using AngleSharp;
 using AngleSharp.Dom;
+using GridMonitor.Domain.Entities;
 using Microsoft.Extensions.Logging;
 
 namespace GridMonitor.Infrastructure.HttpClients;
 
 public class GridParser
 {
-	private readonly ILogger<GridParser> _logger;
+	private readonly ILogger<GridParser> logger;
+
 	private static readonly IBrowsingContext AngleSharp = BrowsingContext.New(Configuration.Default);
 
-	private static readonly TimeZoneInfo SAZone = TimeZoneInfo.FindSystemTimeZoneById(
-			OperatingSystem.IsWindows() ? "South Africa Standard Time" : "Africa/Johannesburg"
-	);
+	private static readonly TimeZoneInfo SAZone =
+		TimeZoneInfo.FindSystemTimeZoneById(
+			OperatingSystem.IsWindows()
+				? "South Africa Standard Time"
+				: "Africa/Johannesburg"
+		);
 
-	public GridParser(ILogger<GridParser> logger) => _logger = logger;
+	public GridParser(ILogger<GridParser> logger)
+	{
+		this.logger = logger;
+	}
 
-	public async Task<SuburbSchedule> ParseScheduleAsync(
+	public async Task<List<ScheduleSlot>> ParseScheduleAsync(
 		Suburb suburb,
-		int stage,
+		short stage,
 		string html,
 		CancellationToken ct = default)
 	{
@@ -25,64 +33,93 @@ public class GridParser
 		{
 			var doc = await AngleSharp.OpenAsync(req => req.Content(html), ct);
 
-			// Eskom's schedule lives in a <ul class="list_schedule"> or a <table>
-			// They have restyled a few times — try table first, then list
-			var days = TryParseTable(doc, suburb, stage)
-					?? TryParseList(doc, suburb, stage)
-					?? [];
+			var slots =
+				TryParseDivSchedule(doc, suburb, stage)
+				?? TryParseTable(doc, suburb, stage)
+				?? TryParseList(doc, suburb, stage)
+				?? [];
 
-			if (days.Count == 0)
+			if (slots.Count == 0)
 			{
-				_logger.LogWarning("No schedule data parsed for suburb {Name}", suburb.Name);
-				// Save raw HTML for debugging
+				logger.LogWarning("No schedule data parsed for suburb {Name}", suburb.Name);
+
 				await File.WriteAllTextAsync(
-					$"debug_{suburb.Id}_stage{stage}.html", html, ct);
+					$"debug_{suburb.Id}_stage{stage}.html",
+					html,
+					ct);
 			}
 
-			return new SuburbSchedule(suburb, days, DateTime.UtcNow);
+			// Clean data
+			slots = DeduplicateSlots(slots);
+			slots = MergeOverlappingSlots(slots);
+
+			return slots;
 		}
 		catch (Exception ex)
 		{
-			_logger.LogError(ex, "Parse failed for suburb {Name}", suburb.Name);
-			return null;
+			logger.LogError(ex, "Parse failed for suburb {Name}", suburb.Name);
+			return [];
 		}
 	}
 
-	private List<DaySchedule> TryParseTable(IDocument doc, Suburb suburb, int stage)
+	private List<ScheduleSlot> TryParseDivSchedule(
+		IDocument doc,
+		Suburb suburb,
+		short stage)
 	{
-		// Try multiple selectors — Eskom has changed their HTML structure over the years
-		var table = doc.QuerySelector("table.scheduleTable")
-				 ?? doc.QuerySelector("table#ctl00_ContentPlaceHolder1_GridView1")
-				 ?? doc.QuerySelector("table");
+		var result = new List<ScheduleSlot>();
 
+		var days = doc.QuerySelectorAll(".scheduleDay");
+		if (days.Length == 0) return result;
+
+		foreach (var day in days)
+		{
+			var dateText = day.QuerySelector(".dayMonth")?.TextContent.Trim();
+			if (string.IsNullOrWhiteSpace(dateText) || dateText == "-")
+				continue;
+
+			if (!TryParseDate(dateText, out var date))
+				continue;
+
+			var links = day.QuerySelectorAll("a");
+			if (!links.Any()) continue;
+
+			foreach (var link in links)
+			{
+				var timeText = link.TextContent.Trim();
+
+				if (!TryParseTimeRange(timeText, out var start, out var end))
+					continue;
+
+				var (startUtc, endUtc) = ToUtcSlot(date, start, end);
+
+				result.Add(new ScheduleSlot
+				{
+					SuburbId = suburb.Id,
+					Stage = stage,
+					StartTime = TimeOnly.FromDateTime(startUtc),
+					EndTime = TimeOnly.FromDateTime(endUtc),
+					ScheduleDay = date.DayOfWeek,
+					DataHash = $"{suburb.Id}_{stage}_{startUtc:O}_{endUtc:O}",
+					CreatedAt = DateTime.UtcNow
+				});
+			}
+		}
+
+		return result;
+	}
+
+	// Optional fallback (older Eskom layouts)
+	private List<ScheduleSlot> TryParseTable(
+		IDocument doc,
+		Suburb suburb,
+		short stage)
+	{
+		var table = doc.QuerySelector("table");
 		if (table == null) return [];
 
-		var headers = table.QuerySelectorAll("thead th, thead td")
-						   .Skip(1)  // skip "Time" column
-						   .Select(th => th.TextContent.Trim())
-						   .ToList();
+		var result = new List<ScheduleSlot>();
 
-		if (headers.Count == 0)
-		{
-			// Some Eskom pages put headers in the first tbody row
-			var firstRow = table.QuerySelector("tbody tr:first-child");
-			if (firstRow != null)
-				headers = firstRow.QuerySelectorAll("td")
-								  .Skip(1)
-								  .Select(td => td.TextContent.Trim())
-								  .ToList();
-		}
-
-		if (headers.Count == 0)
-		{
-			_logger.LogDebug("Table found but no headers for {Name}", suburb.Name);
-			return null;
-		}
-
-		// Initialise a slot list per day
-		var daySlots = headers.Select(h => new DaySchedule(h, [])).ToList();
-
-		// Parse each row
 		var rows = table.QuerySelectorAll("tbody tr");
 		foreach (var row in rows)
 		{
@@ -93,66 +130,123 @@ public class GridParser
 			if (!TryParseTimeRange(timeText, out var start, out var end))
 				continue;
 
-			// Each remaining cell corresponds to a day
-			for (var i = 1; i < cells.Count && i - 1 < daySlots.Count; i++)
+			for (int i = 1; i < cells.Count; i++)
 			{
-				var cellContent = cells[i].TextContent.Trim();
-				var cellClass = cells[i].GetAttribute("class") ?? "";
+				var content = cells[i].TextContent.Trim();
+				var cls = cells[i].GetAttribute("class") ?? "";
 
-				// Eskom marks active slots with content like "1", "2", "x",
-				// or a CSS class like "active", "stage1", "on"
-				if (!IsActiveCell(cellContent, cellClass)) continue;
+				if (!IsActiveCell(content, cls)) continue;
 
-				daySlots[i - 1].Slots.Add(new ScheduleSlot(
-					suburb.Id,
-					suburb.Name,
-					stage,
-					start,
-					end
-				));
+				// fallback: assume today (rarely used)
+				var date = DateOnly.FromDateTime(DateTime.Now);
+
+				var (startUtc, endUtc) = ToUtcSlot(date, start, end);
+
+				result.Add(new ScheduleSlot
+				{
+					SuburbId = suburb.Id,
+					Stage = stage,
+					StartTime = TimeOnly.FromDateTime(startUtc),
+					EndTime = TimeOnly.FromDateTime(endUtc),
+					ScheduleDay = date.DayOfWeek,
+					DataHash = $"{suburb.Id}_{stage}_{startUtc:O}_{endUtc:O}",
+					CreatedAt = DateTime.UtcNow
+				});
 			}
 		}
 
-		return daySlots.Any(d => d.Slots.Count != 0) ? daySlots : [];
+		return result;
 	}
 
-	private List<DaySchedule> TryParseList(IDocument doc, Suburb suburb, int stage)
+	private List<ScheduleSlot> TryParseList(
+		IDocument doc,
+		Suburb suburb,
+		short stage)
 	{
-		var container = doc.QuerySelector("ul.list_schedule")
-					  ?? doc.QuerySelector(".schedule-container");
+		var container = doc.QuerySelector("ul.list_schedule");
+		if (container == null) return null;
 
-		if (container == null) return [];
+		var result = new List<ScheduleSlot>();
 
-		var days = new List<DaySchedule>();
-
-		var dayItems = container.QuerySelectorAll("li.schedule_day, .schedule-day");
-		foreach (var dayItem in dayItems)
+		var items = container.QuerySelectorAll("li");
+		foreach (var item in items)
 		{
-			var title = dayItem.QuerySelector(".day_title, .day-title, h3, strong")
-							   ?.TextContent.Trim() ?? "Unknown";
+			var text = item.TextContent.Trim();
 
-			var slots = new List<ScheduleSlot>();
-			var timeItems = dayItem.QuerySelectorAll("li.time_slot, .time-slot");
+			if (!TryParseTimeRange(text, out var start, out var end))
+				continue;
 
-			foreach (var timeItem in timeItems)
+			var date = DateOnly.FromDateTime(DateTime.Now);
+
+			var (startUtc, endUtc) = ToUtcSlot(date, start, end);
+
+			result.Add(new ScheduleSlot
 			{
-				var timeText = timeItem.TextContent.Trim();
-				if (!TryParseTimeRange(timeText, out var start, out var end)) continue;
-
-				slots.Add(new ScheduleSlot(suburb.Id, suburb.Name, stage, start, end));
-			}
-
-			days.Add(new DaySchedule(title, slots));
+				SuburbId = suburb.Id,
+				Stage = stage,
+				StartTime = TimeOnly.FromDateTime(startUtc),
+				EndTime = TimeOnly.FromDateTime(endUtc),
+				ScheduleDay = date.DayOfWeek,
+				DataHash = $"{suburb.Id}_{stage}_{startUtc:O}_{endUtc:O}",
+				CreatedAt = DateTime.UtcNow
+			});
 		}
 
-		return days;
+		return result;
 	}
 
-	// Parse "00:00-02:30" or "00:00 - 02:30"
+	// Deduplicate identical slots (removes feeder duplicates)
+	private static List<ScheduleSlot> DeduplicateSlots(List<ScheduleSlot> slots)
+	{
+		return slots
+			.GroupBy(s => s.DataHash)
+			.Select(g => g.First())
+			.OrderBy(s => s.StartTime)
+			.ToList();
+	}
+
+	// Merge overlapping / touching slots
+	private static List<ScheduleSlot> MergeOverlappingSlots(List<ScheduleSlot> slots)
+	{
+		if (slots.Count <= 1)
+			return slots;
+
+		var ordered = slots.OrderBy(s => s.StartTime).ToList();
+		var merged = new List<ScheduleSlot>();
+
+		var current = ordered[0];
+
+		for (int i = 1; i < ordered.Count; i++)
+		{
+			var next = ordered[i];
+
+			if (current.SuburbId == next.SuburbId &&
+				current.Stage == next.Stage &&
+				next.StartTime <= current.EndTime)
+			{
+				current.EndTime = current.EndTime > next.EndTime
+					? current.EndTime
+					: next.EndTime;
+			}
+			else
+			{
+				merged.Add(current);
+				current = next;
+			}
+		}
+
+		merged.Add(current);
+
+		return merged;
+	}
+
 	private static bool TryParseTimeRange(
-		string input, out TimeOnly start, out TimeOnly end)
+		string input,
+		out TimeOnly start,
+		out TimeOnly end)
 	{
 		start = end = default;
+
 		var parts = input.Split('-', StringSplitOptions.TrimEntries);
 		if (parts.Length != 2) return false;
 
@@ -160,14 +254,20 @@ public class GridParser
 			&& TimeOnly.TryParse(parts[1], out end);
 	}
 
-	// Determine if a table cell represents an active (shed) slot
+	private static bool TryParseDate(string input, out DateOnly date)
+	{
+		date = default;
+
+		// "Wed, 15 Apr"
+		var parts = input.Split(',', StringSplitOptions.TrimEntries);
+		if (parts.Length != 2) return false;
+
+		var withYear = $"{parts[1]} {DateTime.Now.Year}";
+		return DateOnly.TryParse(withYear, out date);
+	}
+
 	private static bool IsActiveCell(string content, string cssClass)
 	{
-		if (string.IsNullOrWhiteSpace(content) && string.IsNullOrWhiteSpace(cssClass))
-			return false;
-
-		// Eskom uses various conventions across versions:
-		// numeric content, "x" marker, or CSS classes
 		var c = content.ToLower();
 		var cls = cssClass.ToLower();
 
@@ -175,16 +275,16 @@ public class GridParser
 			|| cls.Contains("active")
 			|| cls.Contains("stage")
 			|| cls.Contains("on")
-			|| (!string.IsNullOrEmpty(content) && content != "&nbsp;" && content != "-");
+			|| (!string.IsNullOrWhiteSpace(content) && content != "-" && content != "&nbsp;");
 	}
 
 	public static (DateTime startUtc, DateTime endUtc) ToUtcSlot(
-	 DateOnly date,
-	 TimeOnly start,
-	 TimeOnly end)
+		DateOnly date,
+		TimeOnly start,
+		TimeOnly end)
 	{
 		var startLocal = date.ToDateTime(start);
-		// Handle midnight crossover e.g. 22:00–00:30
+
 		var endLocal = end <= start
 			? date.AddDays(1).ToDateTime(end)
 			: date.ToDateTime(end);
@@ -196,5 +296,4 @@ public class GridParser
 				DateTime.SpecifyKind(endLocal, DateTimeKind.Unspecified), SAZone)
 		);
 	}
-
 }

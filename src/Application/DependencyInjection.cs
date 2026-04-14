@@ -12,7 +12,6 @@ public static class DependencyInjection
 	{
 		services.AddConfiguration(configuration);
 		services.AddServices();
-		services.AddKeyCloakAuthentication();
 		services.AddShortifyHttpClients();
 		return services;
 	}

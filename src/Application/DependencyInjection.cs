@@ -24,9 +24,12 @@ public static class DependencyInjection
 
 	public static IServiceCollection AddServices(this IServiceCollection services)
 	{
-		services.AddScoped<IGridAlertService, GridAlertService>();
-		services.AddScoped<ISuburbService, SuburbService>();
 		services.AddScoped<IUserService, UserService>();
+		services.AddScoped<IApiKeyService, ApiKeyService>();
+		services.AddScoped<ISubscriptionService, SubscriptionService>();
+		services.AddScoped<IScheduleService, ScheduleService>();
+		services.AddScoped<IStageService, StageService>();
+		services.AddScoped<IUsageService, UsageService>();
 		return services;
 	}
 

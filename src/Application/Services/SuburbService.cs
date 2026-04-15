@@ -17,7 +17,7 @@ public class SuburbService : ISuburbService
 
 	public async ValueTask<List<Suburb>> GetBySearchPhraseAsync(string searchPhrase, int limit, CancellationToken ct = default)
 	{
-		return await suburbRepository.GetBySearchPhraseAsync(searchPhrase, limit, ct);
+		return await suburbRepository.SearchAsync(searchPhrase, limit, ct);
 	}
 
 	public async ValueTask<List<Municipality>> GetMunicipalitiesAsync(int provinceId, CancellationToken ct = default)

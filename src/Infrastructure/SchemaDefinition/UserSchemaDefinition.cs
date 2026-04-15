@@ -25,7 +25,7 @@ internal class UserSchemaDefinition : IEntityTypeConfiguration<User>
 			   .IsRequired()
 			   .HasMaxLength(200);
 
-		builder.Property(x => x.PricingTier)
+		builder.Property(x => x.Tier)
 			   .IsRequired()
 			   .HasMaxLength(20)
 			   .HasDefaultValue(PricingTier.Free)

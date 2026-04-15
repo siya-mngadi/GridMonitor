@@ -8,7 +8,7 @@ public class User
 	public string KeycloakId { get; set; }
 	public string Email { get; set; }
 	public string Password { get; set; }
-	public PricingTier PricingTier { get; set; }
+	public PricingTier Tier { get; set; }
 	public bool Active { get; set; }
 	public DateTime CreatedAt { get; set; }
 	public IList<AlertSubscription> Subscriptions { get; set; }

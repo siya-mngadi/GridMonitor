@@ -6,7 +6,7 @@ public class AlertLog
 {
 	public long Id { get; set; }
 	public Guid SubscriptionId { get; set; }
-	public Channel ChannelType { get; set; }
+	public ChannelType ChannelType { get; set; }
 	public string Destination { get; set; }
 	public string IdemptotencyKey { get; set; }
 	public short Stage { get; set; }

@@ -1,9 +1,9 @@
 ﻿namespace GridMonitor.Domain.Enums;
 
-public enum Channel : byte
+public enum ChannelType : byte
 {
-	Whatsapp,
+	WhatsApp,
 	Email,
-	SMS,
+	Sms,
 	Webhook
 }

@@ -43,7 +43,7 @@ public class SuburbRepository : ISuburbRepository
 			.ToListAsync(ct);
 	}
 
-	public async ValueTask<List<Suburb>> GetBySearchPhraseAsync(string searchPhrase, int limit, CancellationToken ct = default)
+	public async ValueTask<List<Suburb>> SearchAsync(string searchPhrase, int limit, CancellationToken ct = default)
 	{
 		return await context.Suburbs
 			.AsNoTracking()

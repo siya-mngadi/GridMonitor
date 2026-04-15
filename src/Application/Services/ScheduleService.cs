@@ -2,7 +2,6 @@
 using GridMonitor.Domain.Repositories;
 using GridMonitor.Domain.Services;
 using GridMonitor.Domain.Shared;
-using GridMonitor.Domain.ValueObjects;
 using Microsoft.Extensions.Logging;
 
 namespace GridMonitor.Application.Services;

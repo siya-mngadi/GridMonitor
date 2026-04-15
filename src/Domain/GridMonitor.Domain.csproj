@@ -8,11 +8,6 @@
 
 
   <ItemGroup>
-    <Folder Include="ValueObjects\" />
-  </ItemGroup>
-
-
-  <ItemGroup>
     <PackageReference Include="Keycloak.AuthServices.Authentication" Version="2.9.0" />
     <PackageReference Include="Polly.Core" Version="8.6.6" />
   </ItemGroup>

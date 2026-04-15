@@ -1,6 +1,5 @@
 ﻿using GridMonitor.Domain.Entities;
 using GridMonitor.Domain.Shared;
-using GridMonitor.Domain.ValueObjects;
 
 namespace GridMonitor.Domain.Services;
 

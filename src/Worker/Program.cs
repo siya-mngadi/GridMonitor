@@ -36,6 +36,7 @@ public class Program
 		builder.Services.AddScoped<ISyncRunRepository, SyncRunRepository>();
 		builder.Services.AddScoped<IAlertLogRepository, AlertLogRepository>();
 		builder.Services.AddScoped<IStageSnapshotRepository, StageSnapshotRepository>();
+		builder.Services.AddScoped<IScheduleSlotRepository, ScheduleSlotRepository>();
 
 		builder.Services.AddHttpClient<GridClient>();
 

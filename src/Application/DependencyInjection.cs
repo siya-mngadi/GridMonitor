@@ -1,6 +1,6 @@
 ﻿using GridMonitor.Application.Services;
 using GridMonitor.Domain.Services;
-using GridMonitor.Infrastructure.HttpClients;
+using GridMonitor.Infrastructure.Proxies;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 

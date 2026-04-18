@@ -67,16 +67,20 @@ public class MaintenanceWorker : BackgroundService
 	private async ValueTask RunMaintenanceAsync(CancellationToken ct)
 	{
 		using var scope = scopeFactory.CreateScope();
-		var snapshots = scope.ServiceProvider.GetRequiredService<IStageSnapshotRepository>();
-		var alertLogs = scope.ServiceProvider.GetRequiredService<IAlertLogRepository>();
+		var snapshotRepo = scope.ServiceProvider.GetRequiredService<IStageSnapshotRepository>();
+		var alertLogRepo = scope.ServiceProvider.GetRequiredService<IAlertLogRepository>();
+		var scheduleRepo = scope.ServiceProvider.GetRequiredService<IScheduleSlotRepository>();
 
 		logger.LogInformation("Running maintenance");
 
-		await snapshots.PurgeOlderThanAsync(TimeSpan.FromDays(7), ct);
-		await snapshots.UnitOfWork.SaveEntitiesAsync(ct);
+		await scheduleRepo.PurgeOlderThanAsync(TimeSpan.FromDays(3), ct);
+		await scheduleRepo.UnitOfWork.SaveEntitiesAsync(ct);
 
-		await alertLogs.PurgeOlderThanAsync(TimeSpan.FromDays(30), ct);
-		await alertLogs.UnitOfWork.SaveEntitiesAsync(ct);
+		await snapshotRepo.PurgeOlderThanAsync(TimeSpan.FromDays(7), ct);
+		await snapshotRepo.UnitOfWork.SaveEntitiesAsync(ct);
+
+		await alertLogRepo.PurgeOlderThanAsync(TimeSpan.FromDays(30), ct);
+		await alertLogRepo.UnitOfWork.SaveEntitiesAsync(ct);
 
 		logger.LogInformation("Maintenance complete");
 	}

@@ -1,4 +1,5 @@
-﻿using GridMonitor.Domain.Entities;
+﻿using EFCore.BulkExtensions;
+using GridMonitor.Domain.Entities;
 using GridMonitor.Domain.Repositories;
 using GridMonitor.Infrastructure.DataContext;
 using Microsoft.EntityFrameworkCore;
@@ -61,28 +62,35 @@ public class ScheduleSlotRepository : IScheduleSlotRepository
 			  .ToListAsync(ct);
 	}
 
-	// Returns 1 if inserted, 0 if unchanged, -1 if updated
-	public async ValueTask<int> UpsertSlotAsync(ScheduleSlot slot, CancellationToken ct = default)
+	public async ValueTask<int> UpsertSlotAsync(List<ScheduleSlot> slots, CancellationToken ct = default)
 	{
-		var existing = await GetByCompositeKeyAsync(
-			slot.SuburbId, slot.Stage, slot.ScheduleDay, slot.StartTime, ct);
-
-		if (existing is null)
+		var config = new BulkConfig
 		{
-			await context.ScheduleSlots.AddAsync(slot, ct);
-			return 1;
-		}
+			CalculateStats = true,
+			UpdateByProperties = [nameof(ScheduleSlot.SuburbId), nameof(ScheduleSlot.Stage), nameof(ScheduleSlot.ScheduleDay), nameof(ScheduleSlot.StartTime)],
+			PropertiesToIncludeOnUpdate =
+			[
+				nameof(ScheduleSlot.DayLabel),
+				nameof(ScheduleSlot.StartTime),
+				nameof(ScheduleSlot.EndTime),
+				nameof(ScheduleSlot.DataHash)
+			]
+		};
 
-		if (existing.DataHash == slot.DataHash) return 0;
-
-		existing.EndTime = slot.EndTime;
-		existing.DataHash = slot.DataHash;
-		return -1;
+		await context.BulkInsertOrUpdateAsync(slots, config, cancellationToken: ct);
+		return config.StatsInfo?.StatsNumberInserted + config.StatsInfo?.StatsNumberInserted ?? 0;
 	}
 
 	public async ValueTask DeleteBySuburbAsync(int suburbId, CancellationToken ct = default)
 	{
 		var slots = await context.ScheduleSlots.Where(s => s.SuburbId == suburbId).ToListAsync(ct);
+		context.ScheduleSlots.RemoveRange(slots);
+	}
+
+	public async ValueTask PurgeOlderThanAsync(TimeSpan age, CancellationToken ct = default)
+	{
+		var cutoffDate = DateTime.UtcNow - age;
+		var slots = await context.ScheduleSlots.Where(s => s.CreatedAt < cutoffDate).ToListAsync(ct);
 		context.ScheduleSlots.RemoveRange(slots);
 	}
 }

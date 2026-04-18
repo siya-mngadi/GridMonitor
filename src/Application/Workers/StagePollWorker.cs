@@ -1,5 +1,5 @@
 ﻿using GridMonitor.Domain.Services;
-using GridMonitor.Infrastructure.HttpClients;
+using GridMonitor.Infrastructure.Proxies;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
@@ -15,12 +15,16 @@ public class StagePollWorker : BackgroundService
 	// worker can fire immediately rather than waiting its full 5-minute cycle
 	internal static volatile bool StageChangedSignal = false;
 
+	// Html parser
+	private readonly GridParser parser;
+
 	private static readonly TimeSpan PollInterval = TimeSpan.FromMinutes(5);
 	private PeriodicTimer timer;
 	public StagePollWorker(IServiceScopeFactory scopeFactory, ILogger<StagePollWorker> logger)
 	{
 		this.scopeFactory = scopeFactory;
 		this.logger = logger;
+		parser = new GridParser(logger);
 	}
 	protected override async Task ExecuteAsync(CancellationToken stoppingToken)
 	{
@@ -43,6 +47,7 @@ public class StagePollWorker : BackgroundService
 		using var scope = scopeFactory.CreateScope();
 		var scraper = scope.ServiceProvider.GetRequiredService<GridClient>();
 		var stageService = scope.ServiceProvider.GetRequiredService<IStageService>();
+		var scheduleService = scope.ServiceProvider.GetRequiredService<IScheduleService>();
 
 		var status = await scraper.GetStatusAsync(ct);
 		if (status is null)
@@ -51,8 +56,8 @@ public class StagePollWorker : BackgroundService
 			return;
 		}
 
+		// Update the stage snapshot and check if the stage changed
 		var result = await stageService.RecordStageAsync(status.Stage, status.RawText, ct);
-
 		if (result.Success && result.Value)
 		{
 			// Stage changed — signal the alert worker to run immediately

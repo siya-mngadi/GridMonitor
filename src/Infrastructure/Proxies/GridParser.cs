@@ -3,11 +3,11 @@ using AngleSharp.Dom;
 using GridMonitor.Domain.Entities;
 using Microsoft.Extensions.Logging;
 
-namespace GridMonitor.Infrastructure.HttpClients;
+namespace GridMonitor.Infrastructure.Proxies;
 
-public class GridParser
+public class GridParser(ILogger logger)
 {
-	private readonly ILogger<GridParser> logger;
+	private readonly ILogger logger = logger;
 
 	private static readonly IBrowsingContext AngleSharp = BrowsingContext.New(Configuration.Default);
 
@@ -17,11 +17,6 @@ public class GridParser
 				? "South Africa Standard Time"
 				: "Africa/Johannesburg"
 		);
-
-	public GridParser(ILogger<GridParser> logger)
-	{
-		this.logger = logger;
-	}
 
 	public async Task<List<ScheduleSlot>> ParseScheduleAsync(
 		Suburb suburb,
@@ -34,9 +29,9 @@ public class GridParser
 			var doc = await AngleSharp.OpenAsync(req => req.Content(html), ct);
 
 			var slots =
-				TryParseDivSchedule(doc, suburb, stage)
-				?? TryParseTable(doc, suburb, stage)
-				?? TryParseList(doc, suburb, stage)
+				TryParseDivSchedule(doc, suburb.EskomId, stage)
+				?? TryParseTable(doc, suburb.EskomId, stage)
+				?? TryParseList(doc, suburb.EskomId, stage)
 				?? [];
 
 			if (slots.Count == 0)
@@ -44,7 +39,7 @@ public class GridParser
 				logger.LogWarning("No schedule data parsed for suburb {Name}", suburb.Name);
 
 				await File.WriteAllTextAsync(
-					$"debug_{suburb.Id}_stage{stage}.html",
+					$"debug_{suburb.EskomId}_stage{stage}.html",
 					html,
 					ct);
 			}
@@ -64,7 +59,7 @@ public class GridParser
 
 	private List<ScheduleSlot> TryParseDivSchedule(
 		IDocument doc,
-		Suburb suburb,
+		int suburbId,
 		short stage)
 	{
 		var result = new List<ScheduleSlot>();
@@ -95,12 +90,12 @@ public class GridParser
 
 				result.Add(new ScheduleSlot
 				{
-					SuburbId = suburb.Id,
+					SuburbId = suburbId,
 					Stage = stage,
 					StartTime = TimeOnly.FromDateTime(startUtc),
 					EndTime = TimeOnly.FromDateTime(endUtc),
 					ScheduleDay = date.DayOfWeek,
-					DataHash = $"{suburb.Id}_{stage}_{startUtc:O}_{endUtc:O}",
+					DataHash = $"{suburbId}_{stage}_{startUtc:O}_{endUtc:O}",
 					CreatedAt = DateTime.UtcNow
 				});
 			}
@@ -112,7 +107,7 @@ public class GridParser
 	// Optional fallback (older Eskom layouts)
 	private List<ScheduleSlot> TryParseTable(
 		IDocument doc,
-		Suburb suburb,
+		int suburbId,
 		short stage)
 	{
 		var table = doc.QuerySelector("table");
@@ -144,12 +139,12 @@ public class GridParser
 
 				result.Add(new ScheduleSlot
 				{
-					SuburbId = suburb.Id,
+					SuburbId = suburbId,
 					Stage = stage,
 					StartTime = TimeOnly.FromDateTime(startUtc),
 					EndTime = TimeOnly.FromDateTime(endUtc),
 					ScheduleDay = date.DayOfWeek,
-					DataHash = $"{suburb.Id}_{stage}_{startUtc:O}_{endUtc:O}",
+					DataHash = $"{suburbId}_{stage}_{startUtc:O}_{endUtc:O}",
 					CreatedAt = DateTime.UtcNow
 				});
 			}
@@ -160,7 +155,7 @@ public class GridParser
 
 	private List<ScheduleSlot> TryParseList(
 		IDocument doc,
-		Suburb suburb,
+		int suburbId,
 		short stage)
 	{
 		var container = doc.QuerySelector("ul.list_schedule");
@@ -182,12 +177,12 @@ public class GridParser
 
 			result.Add(new ScheduleSlot
 			{
-				SuburbId = suburb.Id,
+				SuburbId = suburbId,
 				Stage = stage,
 				StartTime = TimeOnly.FromDateTime(startUtc),
 				EndTime = TimeOnly.FromDateTime(endUtc),
 				ScheduleDay = date.DayOfWeek,
-				DataHash = $"{suburb.Id}_{stage}_{startUtc:O}_{endUtc:O}",
+				DataHash = $"{suburbId}_{stage}_{startUtc:O}_{endUtc:O}",
 				CreatedAt = DateTime.UtcNow
 			});
 		}

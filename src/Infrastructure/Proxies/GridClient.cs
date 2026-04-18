@@ -2,7 +2,7 @@
 using Microsoft.Extensions.Logging;
 using System.Net;
 
-namespace GridMonitor.Infrastructure.HttpClients;
+namespace GridMonitor.Infrastructure.Proxies;
 
 public class GridClient
 {
@@ -66,14 +66,14 @@ public class GridClient
 		}
 	}
 
-	public async Task<string> GetScheduleHtmlAsync(Suburb suburb, int stage, CancellationToken ct = default)
+	public async Task<string> GetScheduleHtmlAsync(int suburbId, int stage, CancellationToken ct = default)
 	{
 		if (stage < 1 || stage > 8)
 			throw new ArgumentOutOfRangeException(nameof(stage), "Stage must be 1–8");
 
 		try
 		{
-			var url = $"GetScheduleM/{suburb.Id}/{stage}/_/1";
+			var url = $"GetScheduleM/{suburbId}/{stage}/_/1";
 			_logger.LogDebug("Fetching schedule: {Url}", url);
 
 			var html = await _http.GetStringAsync(url, ct);
@@ -84,12 +84,12 @@ public class GridClient
 			ex.StatusCode == HttpStatusCode.BadRequest)
 		{
 			_logger.LogWarning("No schedule found for suburb {Id} stage {Stage}",
-				suburb.Id, stage);
+				suburbId, stage);
 			return null;
 		}
 		catch (Exception ex)
 		{
-			_logger.LogError(ex, "GetScheduleHtml failed for suburb {Id}", suburb.Id);
+			_logger.LogError(ex, "GetScheduleHtml failed for suburb {Id}", suburbId);
 			return null;
 		}
 	}

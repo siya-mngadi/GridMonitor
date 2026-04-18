@@ -16,6 +16,8 @@ public interface IScheduleSlotRepository : IRepository
 		int stage, 
 		CancellationToken ct = default);
 
+	ValueTask PurgeOlderThanAsync(TimeSpan age, CancellationToken ct = default);
+
 	ValueTask<List<ScheduleSlot>> GetUpcomingForSuburbAsync(
 		int suburbId,
 		int currentStage,
@@ -23,6 +25,6 @@ public interface IScheduleSlotRepository : IRepository
 		TimeOnly afterTime,
 		CancellationToken ct = default);
 
-	ValueTask<int> UpsertSlotAsync(ScheduleSlot slot, CancellationToken ct = default);
+	ValueTask<int> UpsertSlotAsync(List<ScheduleSlot> slots, CancellationToken ct = default);
 	ValueTask DeleteBySuburbAsync(int suburbId, CancellationToken ct = default);
 }

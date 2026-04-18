@@ -37,7 +37,7 @@ public class WebhookService
 
 		try
 		{
-			var response = await _httpClient.SendAsync(request);
+			var response = await httpClient.SendAsync(request);
 
 			// optional: log failures
 			if (!response.IsSuccessStatusCode)

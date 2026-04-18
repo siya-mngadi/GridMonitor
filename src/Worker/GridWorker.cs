@@ -57,7 +57,7 @@ internal class GridWorker : BackgroundService
 
 			if (delay > TimeSpan.Zero)
 			{
-				logger.LogInformation("Next run at: {Next}", next);
+				logger.LogInformation("Next full sync run at: {Next}", next);
 				await Task.Delay(delay, stoppingToken);
 			}
 

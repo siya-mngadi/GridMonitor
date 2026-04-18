@@ -1,3 +1,4 @@
+using Asp.Versioning;
 using GridMonitor.Api.Middleware;
 using GridMonitor.Infrastructure;
 using Keycloak.AuthServices.Authentication;
@@ -67,6 +68,21 @@ public partial class Program
 
 		// Add rate limiting
 		builder.Services.AddRateLimiting();
+
+		// add Api Versioning
+		builder.Services.AddApiVersioning(options =>
+		{
+			options.AssumeDefaultVersionWhenUnspecified = true;
+			options.DefaultApiVersion = new ApiVersion(1, 0);
+			options.ReportApiVersions = true;
+			options.ApiVersionReader = ApiVersionReader.Combine(new UrlSegmentApiVersionReader(),
+				new HeaderApiVersionReader("X-Api-Version"));
+		}).AddApiExplorer(options =>
+		{
+			options.GroupNameFormat = "'v'VVV";
+			options.SubstituteApiVersionInUrl = true;
+			options.DefaultApiVersion = new ApiVersion(1, 0);
+		});
 
 		// Serilog configuration
 		builder.Host.UseSerilog((context, config) =>

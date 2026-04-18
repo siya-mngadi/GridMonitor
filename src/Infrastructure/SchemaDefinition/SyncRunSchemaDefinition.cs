@@ -17,6 +17,7 @@ internal class SyncRunSchemaDefinition : IEntityTypeConfiguration<SyncRun>
 
 		builder.Property(x => x.Type)
 			   .IsRequired()
+			   .HasConversion<string>()
 			   .HasMaxLength(30);
 
 		builder.Property(x => x.Success)

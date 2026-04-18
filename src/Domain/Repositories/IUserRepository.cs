@@ -4,6 +4,8 @@ namespace GridMonitor.Domain.Repositories;
 
 public interface IUserRepository : IRepository
 {
+	ValueTask<User> GetByKeycloakIdAsync(string keycloakId, CancellationToken ct = default);
+	ValueTask RegisterWithKeycloakAsync(User user, CancellationToken ct = default);
 	ValueTask<User> GetByIdAsync(Guid id, CancellationToken ct = default);
 	ValueTask<User> GetByEmailAsync(string email, CancellationToken ct = default);
 	ValueTask<User> GetWithSubscriptionsAsync(Guid id, CancellationToken ct = default);

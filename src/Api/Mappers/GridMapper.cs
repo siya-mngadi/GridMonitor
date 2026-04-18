@@ -1,6 +1,7 @@
 ﻿using GridMonitor.Api.Requests;
 using GridMonitor.Api.Responses;
 using GridMonitor.Domain.Entities;
+using GridMonitor.Domain.ValueObjects;
 
 namespace GridMonitor.Api.Mappers;
 
@@ -24,6 +25,23 @@ public class GridMapper
 	}
 
 	public IEnumerable<SubscriptionResponse> ToResponse(IEnumerable<AlertSubscription> subscriptions)
+	{
+		return subscriptions.Select(ToResponse);
+	}
+
+	public ScheduleSlotResponse ToResponse(ScheduleSlot slot)
+	{
+		return new ScheduleSlotResponse(
+			slot.SuburbId,
+			slot.Stage,
+			slot.StartTime,
+			slot.EndTime,
+			slot.ScheduleDay,
+			slot.CreatedAt
+		);
+	}
+
+	public IEnumerable<ScheduleSlotResponse> ToResponse(IEnumerable<ScheduleSlot> subscriptions)
 	{
 		return subscriptions.Select(ToResponse);
 	}
@@ -79,9 +97,19 @@ public class GridMapper
 		return new StageResponse(stage.Stage, stage.CreatedAt);
 	}
 
+	public CurrentStageResponse ToResponse(short stage)
+	{
+		return new CurrentStageResponse(stage);
+	}
+
 	public ApiKeyResponse ToResponse(ApiKey key)
 	{
 		return new ApiKeyResponse(key.Id, key.KeyPrefix, key.CreatedAt, key.DailyCallLimit);
+	}
+
+	public IEnumerable<ApiKeyResponse> ToResponse(IEnumerable<ApiKey> keys)
+	{
+		return keys.Select(ToResponse);
 	}
 
 	public User FromRequest(RegisterRequest request)
@@ -111,5 +139,10 @@ public class GridMapper
 			AlertMinutesBefore = request.AlertMinutesBefore,
 			SuburbId = request.SuburbId
 		};
+	}
+
+	public UserResponse ToResponse(User user)
+	{
+		return new UserResponse(user.Id, user.Email, user.Tier);
 	}
 }

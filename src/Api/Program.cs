@@ -37,6 +37,9 @@ public partial class Program
 		// Add Keycloak authentication
 		builder.Services.AddKeycloakWebApiAuthentication(builder.Configuration);
 
+		// Add caller context 
+		builder.Services.AddScoped<CallerContext>();
+
 		builder.Services.AddControllers()
 				.AddJsonOptions(options =>
 				{
@@ -90,6 +93,8 @@ public partial class Program
 		app.UseAuthentication();
 
 		app.UseAuthorization();
+
+		app.UseMiddleware<AuthMiddleware>();
 
 		app.UseMiddleware<ExceptionMiddleware>();
 

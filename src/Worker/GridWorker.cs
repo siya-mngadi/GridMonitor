@@ -1,5 +1,7 @@
 ﻿using Cronos;
 using GridMonitor.Domain.Entities;
+using GridMonitor.Domain.Enums;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Polly;
@@ -10,21 +12,17 @@ namespace GridMonitor.Worker;
 
 internal class GridWorker : BackgroundService
 {
-	private readonly ILogger logger;
-	private readonly GridClient gridClient;
-	private readonly IGridService gridService;
+	private readonly IServiceScopeFactory scopeFactory;
+	private readonly ILogger<GridWorker> logger;
+
 	private readonly ResiliencePipeline pipeline;
 	private readonly CronExpression cron;
-	public GridWorker(
-		GridClient gridClient,
-		IGridService gridService,
-		ILogger<GridWorker> logger)
+	public GridWorker(IServiceScopeFactory scopeFactory, ILogger<GridWorker> logger)
 	{
+		this.scopeFactory = scopeFactory;
 		this.logger = logger;
-		this.gridClient = gridClient;
-		this.gridService = gridService;
 
-		cron = CronExpression.Parse("0 2 * * 0"); // Every Sunday at 2 AM
+		cron = CronExpression.Parse("0 22 * * 0"); // Every Sunday 22:00 UTC = Monday 00:00 SAST
 
 		pipeline = new ResiliencePipelineBuilder()
 			.AddRetry(new RetryStrategyOptions
@@ -63,68 +61,67 @@ internal class GridWorker : BackgroundService
 				await Task.Delay(delay, stoppingToken);
 			}
 
-			var syncRun = new SyncRun
-			{
-				Type = "EskomSync"
-			};
-
 			try
 			{
-				await pipeline.ExecuteAsync(async token =>
-				{
-					var provinces = await gridService.GetProvincesAsync(stoppingToken);
-					foreach (var province in provinces)
-					{
-						var municipalites = await ProcessMunicipalities(province, stoppingToken);
-						syncRun.MunicipalitiesProcessed += municipalites.Count;
-						foreach (var city in municipalites)
-						{
-							var suburbs = await ProcessSuburbs(city, stoppingToken);
-							syncRun.SuburbProcessed += suburbs.Count;
-
-							await Task.Delay(TimeSpan.FromSeconds(5), stoppingToken);
-						}
-						await Task.Delay(TimeSpan.FromMinutes(1), stoppingToken);
-					}
-				}, stoppingToken);
-
-				syncRun.Success = true;
+				await pipeline.ExecuteAsync(RunFullAsync, stoppingToken);
 				logger.LogInformation("Sync run completed successfully");
-			}
-			catch (Exception ex)
-			{
-				syncRun.ErrorMessage = ex.Message;
-				logger.LogError(ex, "Error occurred while processing grid data.");
-			}
-
-			try
-			{
-				syncRun.FinishedAt = DateTime.UtcNow;
-				await gridService.CreateSyncRunAsync(syncRun, stoppingToken);
-				logger.LogInformation("{syncRun}", syncRun);
 			}
 			catch (Exception ex)
 			{
 				logger.LogError(ex, "Error occurred completing data sync.");
 			}
-
 			await Task.Delay(TimeSpan.FromMinutes(5), stoppingToken);
 		}
 	}
 
-	private async ValueTask<List<Municipality>> ProcessMunicipalities(Province province, CancellationToken stoppingToken)
+	private async ValueTask RunFullAsync(CancellationToken stoppingToken)
 	{
-		var municipalities = await gridClient.GetMunicipalitiesAsync(province, stoppingToken);
-		var updatedCount = await gridService.UpsertMunicipalityAsync(municipalities, stoppingToken);
-		logger.LogInformation("Processed {Count} municipalities for province {ProvinceName}", updatedCount, province.Name);
-		return municipalities;
-	}
+		using var scope = scopeFactory.CreateScope();
+		var client = scope.ServiceProvider.GetRequiredService<GridClient>();
+		var gridService = scope.ServiceProvider.GetRequiredService<IGridService>();
 
-	private async ValueTask<List<Suburb>> ProcessSuburbs(Municipality municipality, CancellationToken stoppingToken)
-	{
-		var suburbs = await gridClient.GetSuburbsAsync(municipality, stoppingToken);
-		var updatedCount = await gridService.UpsertSuburbAsync([.. suburbs]);
-		logger.LogInformation("Processed {Count} suburbs for municipality {MunicipalityName}", updatedCount, municipality.Name);
-		return suburbs;
+		var syncRun = new SyncRun
+		{
+			Type = SyncEvent.FullSync,
+			StartedAt = DateTime.UtcNow
+		};
+
+		try
+		{
+			var provinces = await gridService.GetProvincesAsync(stoppingToken);
+			foreach (var province in provinces)
+			{
+				var municipalities = await client.GetMunicipalitiesAsync(province, stoppingToken);
+				var updatedMunicipalities = await gridService.UpsertMunicipalityAsync(municipalities, stoppingToken);
+				logger.LogInformation("Processed {Count} municipalities for province {ProvinceName}", updatedMunicipalities, province.Name);
+				syncRun.MunicipalitiesProcessed += municipalities.Count;
+				
+				foreach (var municipality in municipalities)
+				{
+					var suburbs = await client.GetSuburbsAsync(municipality, stoppingToken);
+					var updatedSuburbs = await gridService.UpsertSuburbAsync([.. suburbs]);
+					logger.LogInformation("Processed {Count} suburbs for municipality {MunicipalityName}", updatedSuburbs, municipality.Name);
+					syncRun.SuburbProcessed += suburbs.Count;
+					await Task.Delay(TimeSpan.FromSeconds(5), stoppingToken);
+				}
+				await Task.Delay(TimeSpan.FromMinutes(1), stoppingToken);
+			}
+
+			logger.LogInformation("Municipalities and Suburbs synced successfully");
+
+			syncRun.Success = true;
+			syncRun.FinishedAt = DateTime.UtcNow;
+		}
+		catch (Exception ex)
+		{
+			syncRun.ErrorMessage = ex.Message;
+			syncRun.FinishedAt = DateTime.UtcNow;
+			logger.LogError(ex, "Error occurred while processing grid data.");
+		}
+		finally
+		{
+			await gridService.CreateSyncRunAsync(syncRun, stoppingToken);
+			logger.LogInformation("{syncRun}", syncRun.ToString());
+		}
 	}
 }

@@ -2,4 +2,8 @@
 
 public enum AlertEvent
 {
+	StartingSoon,
+	Started,
+	Ended,
+	StageChanged
 }

@@ -1,4 +1,5 @@
 ﻿using GridMonitor.Domain.Entities;
+using GridMonitor.Domain.Enums;
 using GridMonitor.Domain.Repositories;
 using GridMonitor.Infrastructure.DataContext;
 using Microsoft.EntityFrameworkCore;
@@ -21,7 +22,7 @@ public class SyncRunRepository : ISyncRunRepository
 		await context.SyncRuns.AddAsync(syncRun, ct);
 	}
 
-	public async ValueTask<SyncRun> GetLatestAsync(string type, CancellationToken ct = default)
+	public async ValueTask<SyncRun> GetLatestAsync(SyncEvent type, CancellationToken ct = default)
 	{
 		return await context.SyncRuns
 			  .Where(r => r.Type == type)

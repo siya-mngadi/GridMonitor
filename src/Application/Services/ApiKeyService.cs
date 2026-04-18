@@ -24,6 +24,17 @@ public class ApiKeyService : IApiKeyService
 		this.logger = logger;
 	}
 
+	public async ValueTask<Result<List<ApiKey>>> GetApiKeysAsync(Guid userId, CancellationToken ct = default)
+	{
+		var user = await userRepository.GetByIdAsync(userId, ct);
+		if (user is null) return Result<List<ApiKey>>.Fail("User not found.");
+		if (!user.Active) return Result<List<ApiKey>>.Fail("Account is deactivated.");
+
+		var keys = await apiKeyRepository.GetApiKeysAsync(userId, ct);
+		if (keys is null || keys.Count == 0) return Result<List<ApiKey>>.Fail("API key not found.");
+		return Result<List<ApiKey>>.Ok(keys);
+	}
+
 	public async ValueTask<Result<ApiKeyResult>> IssueAsync(Guid userId, CancellationToken ct = default)
 	{
 		var user = await userRepository.GetByIdAsync(userId, ct);
@@ -65,16 +76,14 @@ public class ApiKeyService : IApiKeyService
 		return Result.Ok();
 	}
 
-	public async ValueTask<Result> RotateAsync(Guid keyId, Guid requestingUserId, CancellationToken ct = default)
+	public async ValueTask<Result<ApiKeyResult>> RotateAsync(Guid keyId, Guid requestingUserId, CancellationToken ct = default)
 	{
 		// Revoke old, issue new
 		var revoke = await RevokeAsync(keyId, requestingUserId, ct);
-		if (!revoke.Success) return revoke;
+		if (!revoke.Success) return Result<ApiKeyResult>.Fail(revoke.Error!);
 
-		var issue = await IssueAsync(requestingUserId, ct);
-		return issue.Success
-			? Result.Ok()
-			: Result.Fail(issue.Error!);
+		// Issue new key for same user
+		return await IssueAsync(requestingUserId, ct);
 	}
 
 	public async ValueTask<Result<ApiKey>> ValidateAsync(string rawKey, CancellationToken ct = default)

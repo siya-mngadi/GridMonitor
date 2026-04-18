@@ -6,10 +6,9 @@ namespace GridMonitor.Domain.Services;
 
 public interface IApiKeyService
 {
-	// Returns the plain key exactly once — caller must show it to the user immediately
 	ValueTask<Result<ApiKeyResult>> IssueAsync(Guid userId, CancellationToken ct = default);
-	// Validates a raw key from a request header — returns the key entity if valid
+	ValueTask<Result<List<ApiKey>>> GetApiKeysAsync(Guid userId, CancellationToken ct = default);
 	ValueTask<Result<ApiKey>> ValidateAsync(string rawKey, CancellationToken ct = default);
 	ValueTask<Result> RevokeAsync(Guid keyId, Guid requestingUserId, CancellationToken ct = default);
-	ValueTask<Result> RotateAsync(Guid keyId, Guid requestingUserId, CancellationToken ct = default);
+	ValueTask<Result<ApiKeyResult>> RotateAsync(Guid keyId, Guid requestingUserId, CancellationToken ct = default);
 }

@@ -1,9 +1,11 @@
-﻿namespace GridMonitor.Domain.Entities;
+﻿using GridMonitor.Domain.Enums;
+
+namespace GridMonitor.Domain.Entities;
 
 public class SyncRun
 {
 	public int Id { get; set; }
-	public string Type { get; set; }
+	public SyncEvent Type { get; set; }
 	public bool Success { get; set; }
 	public int MunicipalitiesProcessed { get; set; }
 	public int SuburbProcessed { get; set; }

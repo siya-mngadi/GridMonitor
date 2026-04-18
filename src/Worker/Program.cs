@@ -15,7 +15,7 @@ public class Program
 
 		var envName = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT");
 
-		builder.Environment.EnvironmentName = envName ?? "Development";
+		builder.Environment.EnvironmentName = envName;
 
 		builder.Configuration.SetBasePath(AppContext.BaseDirectory)
 			.AddJsonFile("appsettings.json")
@@ -34,12 +34,15 @@ public class Program
 		builder.Services.AddScoped<ISuburbRepository, SuburbRepository>();
 		builder.Services.AddScoped<IProvinceRepository, ProvinceRepository>();
 		builder.Services.AddScoped<ISyncRunRepository, SyncRunRepository>();
+		builder.Services.AddScoped<IAlertLogRepository, AlertLogRepository>();
+		builder.Services.AddScoped<IStageSnapshotRepository, StageSnapshotRepository>();
 
 		builder.Services.AddHttpClient<GridClient>();
 
 		builder.Services.AddScoped<IGridService, GridService>();
 
 		builder.Services.AddHostedService<GridWorker>();
+		builder.Services.AddHostedService<MaintenanceWorker>();
 
 		var host = builder.Build();
 

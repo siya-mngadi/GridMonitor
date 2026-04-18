@@ -15,6 +15,15 @@ public class UserRepository : IUserRepository
 	}
 
 	public IUnitOfWork UnitOfWork => context;
+	public async ValueTask<User> GetByKeycloakIdAsync(string keycloakId, CancellationToken ct = default)
+	{
+		return await context.Users.FirstOrDefaultAsync(u => u.KeycloakId == keycloakId, ct);
+	}
+
+	public async ValueTask RegisterWithKeycloakAsync(User user, CancellationToken ct = default)
+	{
+		await context.Users.AddAsync(user, ct);
+	}
 
 	public async ValueTask<User> GetByEmailAsync(string email, CancellationToken ct = default)
 	{

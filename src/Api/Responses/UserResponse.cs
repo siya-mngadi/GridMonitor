@@ -1,3 +1,5 @@
-﻿namespace GridMonitor.Api.Responses;
+﻿using GridMonitor.Domain.Enums;
 
-public record UserResponse(string Name, string Email);
+namespace GridMonitor.Api.Responses;
+
+public record UserResponse(Guid Id, string Email, PricingTier Tier);

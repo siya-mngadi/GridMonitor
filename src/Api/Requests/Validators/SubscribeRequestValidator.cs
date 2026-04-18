@@ -12,7 +12,6 @@ public class SubscribeRequestValidator : AbstractValidator<SubscribeRequest>
 			.WithMessage("SuburbId must be greater than 0.");
 
 		RuleFor(x => x.AlertMinutesBefore)
-			.GreaterThan(0)
 			.Must(x => TierPolicy.ValidAlertMinutes.Contains(x))
 			.WithMessage("Alert minutes must be one of the valid alert minutes.");
 	}

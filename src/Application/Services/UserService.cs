@@ -82,7 +82,7 @@ public class UserService : IUserService
 		user.Active = false;
 
 		// Deactivate all API keys — prevent further API access immediately
-		var keys = await apiKeyRepository.GetByUserAsync(userId, ct);
+		var keys = await apiKeyRepository.GetApiKeysAsync(userId, ct);
 		foreach (var k in keys) k.Active = false;
 
 		await userRepository.UnitOfWork.SaveEntitiesAsync(ct);
@@ -100,7 +100,7 @@ public class UserService : IUserService
 		user.Tier = newTier;
 
 		// Update daily call limits on all active API keys to reflect new tier
-		var keys = await apiKeyRepository.GetByUserAsync(userId, ct);
+		var keys = await apiKeyRepository.GetApiKeysAsync(userId, ct);
 		foreach (var k in keys.Where(k => k.Active))
 			k.DailyCallLimit = TierPolicy.DailyCallLimit(newTier);
 

@@ -37,8 +37,8 @@ public class ApiKeyRepository : IApiKeyRepository
 		return await context.ApiKeys.FindAsync([id], ct);
 	}
 
-	public async ValueTask<List<ApiKey>> GetByUserAsync(Guid userId, CancellationToken ct = default)
+	public async ValueTask<List<ApiKey>> GetApiKeysAsync(Guid userId, CancellationToken ct = default)
 	{
-		return await context.ApiKeys.Where(k => k.UserId == userId).ToListAsync(ct);
+		return await context.ApiKeys.Where(k => k.Active && k.UserId == userId ).ToListAsync(ct);
 	}
 }

@@ -57,7 +57,7 @@ public class UsageService : IUsageService
 		var user = await userRepository.GetByIdAsync(userId, ct);
 		if (user is null) return Result<UsageStatsResult>.Ok(new UsageStatsResult(0, 0, 0, PricingTier.Free));
 
-		var keys = await apiKeyRepository.GetByUserAsync(userId, ct);
+		var keys = await apiKeyRepository.GetApiKeysAsync(userId, ct);
 		var activeKey = keys.FirstOrDefault(k => k.Active);
 		if (activeKey is null) return Result<UsageStatsResult>.Ok(new UsageStatsResult(0, 0, 0, user.Tier));
 

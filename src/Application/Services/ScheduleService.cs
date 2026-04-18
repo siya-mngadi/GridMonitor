@@ -27,10 +27,10 @@ public class ScheduleService : IScheduleService
 		this.logger = logger;
 	}
 
-	public async ValueTask<Result<int>> GetCurrentStageAsync(CancellationToken ct = default)
+	public async ValueTask<Result<short>> GetCurrentStageAsync(CancellationToken ct = default)
 	{
 		var stage = await snapshotRepository.GetCurrentStageAsync(ct);
-		return Result<int>.Ok(stage);
+		return Result<short>.Ok(stage);
 	}
 
 	public async ValueTask<Result<SuburbSchedule>> GetScheduleAsync(int suburbId, CancellationToken ct = default)

@@ -15,7 +15,7 @@ public class StageSnapshotRepository : IStageSnapshotRepository
 
 	public IUnitOfWork UnitOfWork => context;
 
-	public async ValueTask<int> GetCurrentStageAsync(CancellationToken ct = default)
+	public async ValueTask<short> GetCurrentStageAsync(CancellationToken ct = default)
 	{
 		return (await GetLatestAsync(ct))?.Stage ?? 0;
 	}

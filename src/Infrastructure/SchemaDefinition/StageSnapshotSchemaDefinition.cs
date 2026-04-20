@@ -18,6 +18,10 @@ public class StageSnapshotSchemaDefinition : IEntityTypeConfiguration<StageSnaps
 		builder.Property(x => x.Stage)
 			   .IsRequired();
 
+		builder.Property(x => x.CreatedAt)
+			   .IsRequired()
+			   .HasDefaultValueSql("NOW() AT TIME ZONE 'UTC'");
+
 		builder.Property(x => x.RawText)
 			   .IsRequired()
 			   .HasMaxLength(10);

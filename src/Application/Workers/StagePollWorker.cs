@@ -15,19 +15,18 @@ public class StagePollWorker : BackgroundService
 	// worker can fire immediately rather than waiting its full 5-minute cycle
 	internal static volatile bool StageChangedSignal = false;
 
-	// Html parser
-	private readonly GridParser parser;
-
 	private static readonly TimeSpan PollInterval = TimeSpan.FromMinutes(5);
 	private PeriodicTimer timer;
 	public StagePollWorker(IServiceScopeFactory scopeFactory, ILogger<StagePollWorker> logger)
 	{
 		this.scopeFactory = scopeFactory;
 		this.logger = logger;
-		parser = new GridParser(logger);
 	}
+
 	protected override async Task ExecuteAsync(CancellationToken stoppingToken)
 	{
+		logger.LogInformation("Stage Poll Worker started — checking every {M}m", PollInterval.TotalMinutes);
+
 		timer = new PeriodicTimer(PollInterval);
 		while (await timer.WaitForNextTickAsync(stoppingToken)) 
 		{
@@ -58,6 +57,9 @@ public class StagePollWorker : BackgroundService
 
 		// Update the stage snapshot and check if the stage changed
 		var result = await stageService.RecordStageAsync(status.Stage, status.RawText, ct);
+
+		logger.LogInformation("Current stage: {Stage} (raw={Raw})", status.Stage, status.RawText);
+
 		if (result.Success && result.Value)
 		{
 			// Stage changed — signal the alert worker to run immediately

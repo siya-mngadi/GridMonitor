@@ -51,24 +51,23 @@ public class ScheduleService : IScheduleService
 		return Result<SuburbSchedule>.Ok(response);
 	}
 
-	public async ValueTask<Result<List<ScheduleSlot>>> GetUpcomingAsync(int suburbId, int currentStage, CancellationToken ct = default)
+	public async ValueTask<Result<IList<ScheduleSlot>>> GetUpcomingAsync(int suburbId, int currentStage, CancellationToken ct = default)
 	{
 		var suburb = await suburbRepository.GetByIdAsync(suburbId, ct);
 		if (suburb is null)
-			return Result<List<ScheduleSlot>>.Fail("Suburb not found.");
-
+			return Result<IList<ScheduleSlot>>.Fail("Suburb not found.");
 		var nowSast = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, SaZone);
 		var nowTime = TimeOnly.FromDateTime(nowSast);
 
 		var slots = await slotRepository.GetUpcomingForSuburbAsync(
 			suburbId, currentStage, nowSast.DayOfWeek, nowTime, ct);
 
-		return Result<List<ScheduleSlot>>.Ok(slots);
+		return Result<IList<ScheduleSlot>>.Ok(slots);
 	}
 
-	public async ValueTask<Result<List<Suburb>>> SearchSuburbsAsync(string query, CancellationToken ct = default)
+	public async ValueTask<Result<IList<Suburb>>> SearchSuburbsAsync(string query, CancellationToken ct = default)
 	{
 		var results = await suburbRepository.SearchAsync(query.Trim(), limit: 20, ct);
-		return Result<List<Suburb>>.Ok(results);
+		return Result<IList<Suburb>>.Ok(results);
 	}
 }

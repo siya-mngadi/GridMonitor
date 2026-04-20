@@ -1,10 +1,10 @@
-﻿using GridMonitor.Domain.Entities;
-using GridMonitor.Domain.Enums;
+﻿using GridMonitor.Domain.Enums;
 using GridMonitor.Domain.Repositories;
 using GridMonitor.Domain.Services;
 using GridMonitor.Domain.Shared;
 using GridMonitor.Domain.ValueObjects;
 using Microsoft.Extensions.Caching.Distributed;
+using Microsoft.Extensions.Caching.Memory;
 
 namespace GridMonitor.Application.Services;
 

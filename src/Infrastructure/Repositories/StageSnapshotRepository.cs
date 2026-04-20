@@ -20,6 +20,13 @@ public class StageSnapshotRepository : IStageSnapshotRepository
 		return (await GetLatestAsync(ct))?.Stage ?? 0;
 	}
 
+	public async ValueTask<IList<StageSnapshot>> GetAsync(CancellationToken ct = default)
+	{
+		return await context.StageSnapshots
+			.OrderByDescending(s => s.CreatedAt)
+			.ToListAsync(ct);
+	}
+
 	public async ValueTask<StageSnapshot> GetLatestAsync(CancellationToken ct = default)
 	{
 		return await context.StageSnapshots
@@ -41,20 +48,20 @@ public class StageSnapshotRepository : IStageSnapshotRepository
 			stageSnapshot.CreatedAt.Year,
 			stageSnapshot.CreatedAt.Month,
 			stageSnapshot.CreatedAt.Day,
-			stageSnapshot.CreatedAt.Hour,
-			0, 0);
+			0, 0, 0, DateTimeKind.Utc);
 
-		var end = start.AddHours(1);
+		var end = start.AddDays(1);
 
-		var exists = await context.StageSnapshots.AnyAsync(s => s.CreatedAt >= start && s.CreatedAt < end, ct);
+		var existing = await context.StageSnapshots.FirstOrDefaultAsync(s => s.Stage == stageSnapshot.Stage && s.CreatedAt >= start && s.CreatedAt < end, ct);
 
-		if (exists)
+		if (existing == null)
 		{
-			context.StageSnapshots.Update(stageSnapshot);
+			await context.StageSnapshots.AddAsync(stageSnapshot, ct);
 		}
 		else
 		{
-			await context.StageSnapshots.AddAsync(stageSnapshot, ct);
+			existing.Stage = stageSnapshot.Stage;
+			existing.CreatedAt = stageSnapshot.CreatedAt;
 		}
 
 		return stageSnapshot;

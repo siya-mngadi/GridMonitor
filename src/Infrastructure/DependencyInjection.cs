@@ -1,5 +1,6 @@
 ﻿using GridMonitor.Domain.Repositories;
 using GridMonitor.Infrastructure.DataContext;
+using GridMonitor.Infrastructure.Proxies;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;

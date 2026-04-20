@@ -1,15 +1,15 @@
 ﻿{
-  "$schema": "https://json.schemastore.org/launchsettings.json",
   "profiles": {
     "GridMonitor.Api": {
       "commandName": "Project",
       "dotnetRunMessages": true,
       "launchBrowser": true,
       "launchUrl": "scalar/v1",
-      "applicationUrl": "http://localhost:8104",
+      "applicationUrl": "http://localhost:8020",
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development"
       }
     }
-  }
+  },
+  "$schema": "https://json.schemastore.org/launchsettings.json"
 }

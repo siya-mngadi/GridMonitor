@@ -17,6 +17,14 @@ public class SuburbRepository : ISuburbRepository
 
 	public IUnitOfWork UnitOfWork => context;
 
+	public async ValueTask<IList<Suburb>> GetAsync(CancellationToken ct = default)
+	{
+		return await context.Suburbs
+			.AsNoTracking()
+			.Include(s => s.Municipality)
+			.ToListAsync(ct);
+	}
+
 	public async ValueTask<Suburb> GetByEskomIdAsync(int eskomId, CancellationToken ct = default)
 	{
 		return await context.Suburbs
@@ -31,10 +39,11 @@ public class SuburbRepository : ISuburbRepository
 			.AsNoTracking()
 			.Include(s => s.Municipality)
 			.Include(s => s.Slots)
+			.AsSplitQuery()
 			.FirstOrDefaultAsync(s => s.Id == id, ct);
 	}
 
-	public async ValueTask<List<Suburb>> GetByMunicipalityAsync(int municipalityId, CancellationToken ct = default)
+	public async ValueTask<IList<Suburb>> GetByMunicipalityAsync(int municipalityId, CancellationToken ct = default)
 	{
 		return await context.Suburbs
 			.AsNoTracking()
@@ -43,7 +52,7 @@ public class SuburbRepository : ISuburbRepository
 			.ToListAsync(ct);
 	}
 
-	public async ValueTask<List<Suburb>> SearchAsync(string searchPhrase, int limit, CancellationToken ct = default)
+	public async ValueTask<IList<Suburb>> SearchAsync(string searchPhrase, int limit, CancellationToken ct = default)
 	{
 		return await context.Suburbs
 			.AsNoTracking()

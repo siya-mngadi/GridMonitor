@@ -18,7 +18,7 @@ public class MunicipalityRepository : IMunicipalityRepository
 
 	public IUnitOfWork UnitOfWork => context;
 
-	public async ValueTask<Municipality> GetByEskomId(int eskomId, CancellationToken ct = default)
+	public async ValueTask<Municipality> GetByEskomIdAsync(int eskomId, CancellationToken ct = default)
 	{
 		return await context.Municipalities
 			.AsNoTracking()

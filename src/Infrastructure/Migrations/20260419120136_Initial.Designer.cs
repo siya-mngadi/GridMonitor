@@ -12,7 +12,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace GridMonitor.Infrastructure.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20260412184610_Initial")]
+    [Migration("20260419120136_Initial")]
     partial class Initial
     {
         /// <inheritdoc />
@@ -28,8 +28,9 @@ namespace GridMonitor.Infrastructure.Migrations
 
             modelBuilder.Entity("GridMonitor.Domain.Entities.AlertChannel", b =>
                 {
-                    b.Property<string>("Id")
-                        .HasColumnType("text");
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
 
                     b.Property<bool>("Active")
                         .ValueGeneratedOnAdd()
@@ -46,8 +47,8 @@ namespace GridMonitor.Infrastructure.Migrations
                         .HasMaxLength(500)
                         .HasColumnType("character varying(500)");
 
-                    b.Property<string>("SubscriptionId")
-                        .HasColumnType("text");
+                    b.Property<Guid>("SubscriptionId")
+                        .HasColumnType("uuid");
 
                     b.Property<string>("WebhookSecret")
                         .HasMaxLength(100)
@@ -87,7 +88,7 @@ namespace GridMonitor.Infrastructure.Migrations
                         .HasMaxLength(1000)
                         .HasColumnType("character varying(1000)");
 
-                    b.Property<string>("EventType")
+                    b.Property<string>("Event")
                         .IsRequired()
                         .HasMaxLength(30)
                         .HasColumnType("character varying(30)");
@@ -101,8 +102,8 @@ namespace GridMonitor.Infrastructure.Migrations
                     b.Property<short>("Stage")
                         .HasColumnType("smallint");
 
-                    b.Property<string>("SubscriptionId")
-                        .HasColumnType("text");
+                    b.Property<Guid>("SubscriptionId")
+                        .HasColumnType("uuid");
 
                     b.Property<bool>("Success")
                         .HasColumnType("boolean");
@@ -118,8 +119,9 @@ namespace GridMonitor.Infrastructure.Migrations
 
             modelBuilder.Entity("GridMonitor.Domain.Entities.AlertSubscription", b =>
                 {
-                    b.Property<string>("Id")
-                        .HasColumnType("text");
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
 
                     b.Property<bool>("Active")
                         .ValueGeneratedOnAdd()
@@ -131,17 +133,19 @@ namespace GridMonitor.Infrastructure.Migrations
                         .HasColumnType("smallint")
                         .HasDefaultValue((short)30);
 
-                    b.Property<string>("AlertSubscriptionId")
-                        .HasColumnType("text");
+                    b.Property<Guid?>("AlertSubscriptionId")
+                        .HasColumnType("uuid");
 
                     b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("timestamp with time zone");
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasDefaultValueSql("CURRENT_TIMESTAMP");
 
                     b.Property<int>("SuburbId")
                         .HasColumnType("integer");
 
-                    b.Property<string>("UserId")
-                        .HasColumnType("text");
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid");
 
                     b.HasKey("Id");
 
@@ -158,8 +162,9 @@ namespace GridMonitor.Infrastructure.Migrations
 
             modelBuilder.Entity("GridMonitor.Domain.Entities.ApiKey", b =>
                 {
-                    b.Property<string>("Id")
-                        .HasColumnType("text");
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
 
                     b.Property<bool>("Active")
                         .ValueGeneratedOnAdd()
@@ -167,7 +172,9 @@ namespace GridMonitor.Infrastructure.Migrations
                         .HasDefaultValue(true);
 
                     b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("timestamp with time zone");
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasDefaultValueSql("CURRENT_TIMESTAMP");
 
                     b.Property<int>("DailyCallLimit")
                         .ValueGeneratedOnAdd()
@@ -187,8 +194,8 @@ namespace GridMonitor.Infrastructure.Migrations
                         .HasMaxLength(20)
                         .HasColumnType("character varying(20)");
 
-                    b.Property<string>("UserId")
-                        .HasColumnType("text");
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid");
 
                     b.HasKey("Id");
 
@@ -338,23 +345,22 @@ namespace GridMonitor.Infrastructure.Migrations
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
 
                     b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("timestamp with time zone");
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasDefaultValueSql("CURRENT_TIMESTAMP");
 
                     b.Property<string>("DataHash")
                         .IsRequired()
                         .HasMaxLength(64)
                         .HasColumnType("character varying(64)");
 
-                    b.Property<string>("DayLabel")
+                    b.Property<TimeOnly>("EndTime")
+                        .HasColumnType("time without time zone");
+
+                    b.Property<string>("ScheduleDay")
                         .IsRequired()
                         .HasMaxLength(20)
                         .HasColumnType("character varying(20)");
-
-                    b.Property<int>("DayOfWeek")
-                        .HasColumnType("integer");
-
-                    b.Property<TimeOnly>("EndTime")
-                        .HasColumnType("time without time zone");
 
                     b.Property<short>("Stage")
                         .HasColumnType("smallint");
@@ -369,7 +375,7 @@ namespace GridMonitor.Infrastructure.Migrations
 
                     b.HasIndex("SuburbId");
 
-                    b.HasIndex("SuburbId", "Stage", "DayOfWeek", "StartTime")
+                    b.HasIndex("SuburbId", "Stage", "ScheduleDay", "StartTime")
                         .IsUnique();
 
                     b.ToTable("ScheduleSlots", "dbo");
@@ -458,7 +464,9 @@ namespace GridMonitor.Infrastructure.Migrations
                         .HasDefaultValue(0);
 
                     b.Property<DateTime>("StartedAt")
-                        .HasColumnType("timestamp with time zone");
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasDefaultValueSql("NOW() AT TIME ZONE 'UTC'");
 
                     b.Property<int>("SuburbProcessed")
                         .ValueGeneratedOnAdd()
@@ -482,8 +490,9 @@ namespace GridMonitor.Infrastructure.Migrations
 
             modelBuilder.Entity("GridMonitor.Domain.Entities.User", b =>
                 {
-                    b.Property<string>("Id")
-                        .HasColumnType("text");
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
 
                     b.Property<bool>("Active")
                         .ValueGeneratedOnAdd()
@@ -506,11 +515,12 @@ namespace GridMonitor.Infrastructure.Migrations
                     b.Property<string>("Password")
                         .HasColumnType("text");
 
-                    b.Property<byte>("PricingTier")
+                    b.Property<string>("Tier")
+                        .IsRequired()
                         .ValueGeneratedOnAdd()
                         .HasMaxLength(20)
-                        .HasColumnType("smallint")
-                        .HasDefaultValue((byte)0);
+                        .HasColumnType("character varying(20)")
+                        .HasDefaultValue("Free");
 
                     b.HasKey("Id");
 
@@ -525,7 +535,8 @@ namespace GridMonitor.Infrastructure.Migrations
                     b.HasOne("GridMonitor.Domain.Entities.AlertSubscription", "Subscription")
                         .WithMany("Channels")
                         .HasForeignKey("SubscriptionId")
-                        .OnDelete(DeleteBehavior.Cascade);
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
 
                     b.Navigation("Subscription");
                 });
@@ -535,7 +546,8 @@ namespace GridMonitor.Infrastructure.Migrations
                     b.HasOne("GridMonitor.Domain.Entities.AlertSubscription", "Subscription")
                         .WithMany("Logs")
                         .HasForeignKey("SubscriptionId")
-                        .OnDelete(DeleteBehavior.Cascade);
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
 
                     b.Navigation("Subscription");
                 });
@@ -555,7 +567,8 @@ namespace GridMonitor.Infrastructure.Migrations
                     b.HasOne("GridMonitor.Domain.Entities.User", "User")
                         .WithMany("Subscriptions")
                         .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade);
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
 
                     b.Navigation("Suburb");
 
@@ -567,7 +580,8 @@ namespace GridMonitor.Infrastructure.Migrations
                     b.HasOne("GridMonitor.Domain.Entities.User", "User")
                         .WithMany("ApiKeys")
                         .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade);
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
 
                     b.Navigation("User");
                 });

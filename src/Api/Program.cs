@@ -1,5 +1,6 @@
 using Asp.Versioning;
 using GridMonitor.Api.Middleware;
+using GridMonitor.Application;
 using GridMonitor.Infrastructure;
 using Keycloak.AuthServices.Authentication;
 using Microsoft.AspNetCore.HttpOverrides;
@@ -11,7 +12,7 @@ namespace GridMonitor.Api;
 
 public partial class Program
 {
-	public const string CorsPolicyName = "AllowAll";
+	public const string CorsPolicyName = "CorsPolicy";
 	private static void Main(string[] args)
 	{
 		var builder = WebApplication.CreateBuilder(args);
@@ -28,15 +29,22 @@ public partial class Program
 			.AddJsonFile($"appsettings.{Environment.MachineName}.json", optional: true);
 
 		// Use Kestrel as the web server
-		builder.WebHost.UseKestrel();
+		builder.WebHost.UseKestrelCore();
 
 		// Add Cors
 		builder.Services.AddGridMonitorCors();
 
+		// Services
+		builder.Services.AddApplicationLayer(builder.Configuration);
+
+		// Repositories and proxies
 		builder.Services.AddInfrastructureLayer(builder.Configuration);
 
 		// Add Keycloak authentication
 		builder.Services.AddKeycloakWebApiAuthentication(builder.Configuration);
+
+		// Add distributed memory cache
+		builder.Services.AddDistributedMemoryCache();
 
 		// Add caller context 
 		builder.Services.AddScoped<CallerContext>();
@@ -58,7 +66,7 @@ public partial class Program
 		});
 
 		// Add Production Postgres
-		if (!builder.Environment.IsDevelopment())
+		if (builder.Environment.IsProduction())
 		{
 			builder.Configuration.ConfigureRailwayDatabaseConnectionString();
 		}

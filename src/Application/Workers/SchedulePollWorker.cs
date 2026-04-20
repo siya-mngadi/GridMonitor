@@ -13,8 +13,8 @@ public class SchedulePollWorker : BackgroundService
 	private readonly ILogger<SchedulePollWorker> logger;
 
 	private readonly GridParser parser;
-	private readonly TimeSpan PollInterval = TimeSpan.FromMinutes(5);
-	private readonly TimeSpan CheckInterval = TimeSpan.FromSeconds(60);
+	private readonly TimeSpan CheckInterval = TimeSpan.FromMinutes(5);
+	private readonly TimeSpan PollInterval = TimeSpan.FromSeconds(60);
 
 	public SchedulePollWorker(IServiceScopeFactory scopeFactory, ILogger<SchedulePollWorker> logger)
 	{
@@ -25,6 +25,8 @@ public class SchedulePollWorker : BackgroundService
 
 	protected override async Task ExecuteAsync(CancellationToken stoppingToken)
 	{
+		logger.LogInformation("Schedule Poll Worker started — checking every {M}m", CheckInterval.TotalMinutes);
+
 		var nextPoll = DateTime.UtcNow;
 		while (!stoppingToken.IsCancellationRequested)
 		{
@@ -41,10 +43,10 @@ public class SchedulePollWorker : BackgroundService
 					logger.LogError(ex, "Schedule poll cycle failed");
 				}
 
-				nextPoll = DateTime.UtcNow + PollInterval;
+				nextPoll = DateTime.UtcNow + CheckInterval;
 			}
 
-			await Task.Delay(CheckInterval, stoppingToken);
+			await Task.Delay(PollInterval, stoppingToken);
 		}
 	}
 
@@ -52,8 +54,7 @@ public class SchedulePollWorker : BackgroundService
 	{
 		var scope = scopeFactory.CreateScope();
 		var scraper = scope.ServiceProvider.GetRequiredService<GridClient>();
-		var scheduleService = scope.ServiceProvider.GetRequiredService<IScheduleService>();
-		var stageService = scope.ServiceProvider.GetRequiredService<IStageService>();
+		var scheduleRepo= scope.ServiceProvider.GetRequiredService<IScheduleSlotRepository>();
 		var subscriptionRepo = scope.ServiceProvider.GetRequiredService<IAlertSubscriptionRepository>();
 
 
@@ -65,7 +66,9 @@ public class SchedulePollWorker : BackgroundService
 		{
 			var suburb = subscription.Suburb;
 			var scheduleHtml = await scraper.GetScheduleHtmlAsync(suburb.EskomId, stage, ct);
-			var schedule = await parser.ParseScheduleAsync(suburb, stage, scheduleHtml, ct);
+			var schedules = await parser.ParseScheduleAsync(suburb, stage, scheduleHtml, ct);
+
+			await scheduleRepo.UpsertSlotsAsync(schedules, ct);
 			
 			await Task.Delay(TimeSpan.FromSeconds(10), ct);
 		}

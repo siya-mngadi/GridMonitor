@@ -27,6 +27,13 @@ public class ProvinceRepository : IProvinceRepository
 			.FirstOrDefaultAsync(p => p.Id == id, ct);
 	}
 
+	public async ValueTask<Province> GetByEskomIdAsync(int eskomId, CancellationToken ct = default)
+	{
+		return await context.Provinces
+			.AsNoTracking()
+			.FirstOrDefaultAsync(p => p.EskomId == eskomId, ct);
+	}
+
 	public async ValueTask<Province> GetByNameAsync(string name, CancellationToken ct = default)
 	{
 		return await context.Provinces

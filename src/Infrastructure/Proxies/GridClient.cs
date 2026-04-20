@@ -50,8 +50,6 @@ public class GridClient
 
 			// Eskom: 1 = no shedding, 2 = stage 1, 3 = stage 2, etc.
 			var stage = value <= 1 ? 0 : value - 1;
-
-			_logger.LogInformation("Current stage: {Stage} (raw={Raw})", stage, raw);
 			return new StageSnapshot
 			{
 				Id = stage,

@@ -7,6 +7,6 @@ public interface IScheduleService
 {
 	ValueTask<Result<short>> GetCurrentStageAsync(CancellationToken ct = default);
 	ValueTask<Result<SuburbSchedule>> GetScheduleAsync(int suburbId, CancellationToken ct = default);
-	ValueTask<Result<List<ScheduleSlot>>> GetUpcomingAsync(int suburbId, int currentStage, CancellationToken ct = default);
-	ValueTask<Result<List<Suburb>>> SearchSuburbsAsync(string query, CancellationToken ct = default);
+	ValueTask<Result<IList<ScheduleSlot>>> GetUpcomingAsync(int suburbId, int currentStage, CancellationToken ct = default);
+	ValueTask<Result<IList<Suburb>>> SearchSuburbsAsync(string query, CancellationToken ct = default);
 }

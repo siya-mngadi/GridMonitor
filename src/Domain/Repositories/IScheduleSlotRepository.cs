@@ -25,6 +25,6 @@ public interface IScheduleSlotRepository : IRepository
 		TimeOnly afterTime,
 		CancellationToken ct = default);
 
-	ValueTask<int> UpsertSlotAsync(List<ScheduleSlot> slots, CancellationToken ct = default);
+	ValueTask<int> UpsertSlotsAsync(List<ScheduleSlot> slots, CancellationToken ct = default);
 	ValueTask DeleteBySuburbAsync(int suburbId, CancellationToken ct = default);
 }

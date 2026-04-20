@@ -15,12 +15,12 @@ public class SuburbService : ISuburbService
 		this.municipalityRepository = municipalityRepository;
 	}
 
-	public async ValueTask<List<Suburb>> GetBySearchPhraseAsync(string searchPhrase, int limit, CancellationToken ct = default)
+	public async ValueTask<IList<Suburb>> GetBySearchPhraseAsync(string searchPhrase, int limit, CancellationToken ct = default)
 	{
 		return await suburbRepository.SearchAsync(searchPhrase, limit, ct);
 	}
 
-	public async ValueTask<List<Municipality>> GetMunicipalitiesAsync(int provinceId, CancellationToken ct = default)
+	public async ValueTask<IList<Municipality>> GetMunicipalitiesAsync(int provinceId, CancellationToken ct = default)
 	{
 		return await municipalityRepository.GetByProvinceAsync(provinceId, ct);
 	}

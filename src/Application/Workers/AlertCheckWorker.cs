@@ -21,7 +21,7 @@ public class AlertCheckWorker : BackgroundService
 
 	protected override async Task ExecuteAsync(CancellationToken stoppingToken)
 	{
-		logger.LogInformation("AlertCheckWorker started — checking every {M}m", CheckInterval.TotalMinutes);
+		logger.LogInformation("Alert Worker started — checking every {M}m", CheckInterval.TotalMinutes);
 
 		var nextScheduledRun = DateTime.UtcNow;
 

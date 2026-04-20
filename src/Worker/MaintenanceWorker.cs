@@ -73,13 +73,13 @@ public class MaintenanceWorker : BackgroundService
 
 		logger.LogInformation("Running maintenance");
 
-		await scheduleRepo.PurgeOlderThanAsync(TimeSpan.FromDays(3), ct);
+		await scheduleRepo.PurgeOlderThanAsync(TimeSpan.FromDays(1), ct);
 		await scheduleRepo.UnitOfWork.SaveEntitiesAsync(ct);
 
-		await snapshotRepo.PurgeOlderThanAsync(TimeSpan.FromDays(7), ct);
+		await snapshotRepo.PurgeOlderThanAsync(TimeSpan.FromDays(3), ct);
 		await snapshotRepo.UnitOfWork.SaveEntitiesAsync(ct);
 
-		await alertLogRepo.PurgeOlderThanAsync(TimeSpan.FromDays(30), ct);
+		await alertLogRepo.PurgeOlderThanAsync(TimeSpan.FromDays(7), ct);
 		await alertLogRepo.UnitOfWork.SaveEntitiesAsync(ct);
 
 		logger.LogInformation("Maintenance complete");

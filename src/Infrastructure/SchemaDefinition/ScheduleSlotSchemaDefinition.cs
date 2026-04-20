@@ -39,7 +39,7 @@ public class ScheduleSlotSchemaDefinition : IEntityTypeConfiguration<ScheduleSlo
 
 		builder.Property(x => x.CreatedAt)
 			   .IsRequired()
-			   .HasDefaultValueSql("CURRENT_TIMESTAMP");
+			   .HasDefaultValueSql("NOW() AT TIME ZONE 'UTC'");
 
 		builder.HasOne(x => x.Suburb)
 			   .WithMany(x => x.Slots)

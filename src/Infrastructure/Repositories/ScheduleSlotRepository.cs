@@ -62,7 +62,7 @@ public class ScheduleSlotRepository : IScheduleSlotRepository
 			  .ToListAsync(ct);
 	}
 
-	public async ValueTask<int> UpsertSlotAsync(List<ScheduleSlot> slots, CancellationToken ct = default)
+	public async ValueTask<int> UpsertSlotsAsync(List<ScheduleSlot> slots, CancellationToken ct = default)
 	{
 		var config = new BulkConfig
 		{

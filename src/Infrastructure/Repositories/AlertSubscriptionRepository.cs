@@ -27,8 +27,8 @@ public class AlertSubscriptionRepository : IAlertSubscriptionRepository
 			  .Where(s => s.Active)
 			  .Include(s => s.User)
 			  .Include(s => s.Suburb)
-				  .ThenInclude(sub => sub.Slots)
 			  .Include(s => s.Channels.Where(c => c.Active))
+			  .AsSplitQuery()
 			  .ToListAsync(ct);
 	}
 

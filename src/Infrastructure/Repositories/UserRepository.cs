@@ -41,6 +41,7 @@ public class UserRepository : IUserRepository
 			  .Include(u => u.Subscriptions)
 				  .ThenInclude(s => s.Channels)
 			  .Include(u => u.ApiKeys)
+			  .AsSplitQuery()
 			  .FirstOrDefaultAsync(u => u.Id == id, ct);
 	}
 

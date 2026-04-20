@@ -1,4 +1,6 @@
-﻿using GridMonitor.Application.Services;
+﻿using GridMonitor.Application.Engine;
+using GridMonitor.Application.Services;
+using GridMonitor.Application.Workers;
 using GridMonitor.Domain.Services;
 using GridMonitor.Infrastructure.Proxies;
 using Microsoft.Extensions.Configuration;
@@ -12,11 +14,13 @@ public static class DependencyInjection
 	{
 		services.AddConfiguration(configuration);
 		services.AddServices();
-		services.AddShortifyHttpClients();
+		services.AddHostedServices();
+		services.AddProxyClients();
+		services.AddScoped<AlertEngine>();
 		return services;
 	}
 
-	public static IServiceCollection AddShortifyHttpClients(this IServiceCollection services)
+	public static IServiceCollection AddProxyClients(this IServiceCollection services)
 	{
 		services.AddHttpClient<GridClient>();
 		return services;
@@ -32,6 +36,15 @@ public static class DependencyInjection
 		services.AddScoped<IUsageService, UsageService>();
 		return services;
 	}
+
+	public static IServiceCollection AddHostedServices(this IServiceCollection services)
+	{
+		services.AddHostedService<SchedulePollWorker>();
+		services.AddHostedService<StagePollWorker>();
+		services.AddHostedService<AlertCheckWorker>();
+		return services;
+	}
+
 
 	public static IServiceCollection AddConfiguration(this IServiceCollection services, IConfiguration configuration)
 	{

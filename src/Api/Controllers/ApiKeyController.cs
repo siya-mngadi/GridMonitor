@@ -9,7 +9,7 @@ namespace GridMonitor.Api.Controllers;
 [Authorize]
 [ApiController]
 [ApiVersion("1.0")]
-[Route("api/v{version:apiVersion}")]
+[Route("api/v{version:apiVersion}/users/keys")]
 public class ApiKeyController : ControllerBase
 {
 	private readonly IApiKeyService apiKeyService;

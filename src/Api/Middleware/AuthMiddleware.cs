@@ -2,16 +2,19 @@
 using GridMonitor.Domain.Repositories;
 using GridMonitor.Domain.Services;
 using Microsoft.AspNetCore.Authorization;
+using Serilog.Context;
 using System.Security.Claims;
 
 namespace GridMonitor.Api.Middleware;
 
 public class AuthMiddleware
 {
-	private readonly RequestDelegate next;
-	public AuthMiddleware(RequestDelegate next)
+	private readonly RequestDelegate _next;
+	private readonly ILogger<AuthMiddleware> _logger;
+	public AuthMiddleware(RequestDelegate next, ILogger<AuthMiddleware> logger)
 	{
-		this.next = next;
+		_next = next;
+		_logger = logger;
 	}
 
 	public async Task InvokeAsync(HttpContext context)
@@ -19,14 +22,20 @@ public class AuthMiddleware
 		var endpoint = context.GetEndpoint();
 		var allowAnonymous = endpoint?.Metadata?.GetMetadata<IAllowAnonymous>();
 
-		// Public routes bypass auth entirely
 		if (allowAnonymous != null || IsPublicRoute(context.Request.Path))
 		{
-			await next(context);
+			using (LogContext.PushProperty("UserName", "anonymous"))
+			{
+				await _next(context);
+			}
 			return;
 		}
 
 		CallerContext caller = context.RequestServices.GetRequiredService<CallerContext>();
+
+		// Accept key from header or query param
+		var rawKey = context.Request.Headers["X-API-Key"].FirstOrDefault()
+				  ?? context.Request.Query["api_key"].FirstOrDefault();
 
 		// JWT path
 		if (context.User.Identity?.IsAuthenticated ?? false)
@@ -57,16 +66,8 @@ public class AuthMiddleware
 			caller.Tier = user.Tier;
 			caller.IsJwt = true;
 			caller.KeycloakId = keycloakId;
-
-			await next(context);
-			return;
 		}
-
-		// Accept key from header or query param
-		var rawKey = context.Request.Headers["X-API-Key"].FirstOrDefault()
-				  ?? context.Request.Query["api_key"].FirstOrDefault();
-
-		if (!string.IsNullOrWhiteSpace(rawKey))
+		else if (!string.IsNullOrWhiteSpace(rawKey))
 		{
 			var keyService = context.RequestServices.GetRequiredService<IApiKeyService>();
 			var usageService = context.RequestServices.GetRequiredService<IUsageService>();
@@ -100,13 +101,19 @@ public class AuthMiddleware
 			caller.Tier = apiKeyResult.Value.User?.Tier ?? PricingTier.Free;
 			caller.IsApiKey = true;
 			caller.ApiKeyId = apiKeyResult.Value.Id;
-
-			await next(context);
+		}
+		else
+		{
+			// No credential 
+			await Reject(context, 401, "Authentication required. Please sign up");
 			return;
 		}
 
-		// No credential 
-		await Reject(context, 401, "Authentication required. Please sign up");
+		var username = context.User?.Identity?.Name ?? caller?.UserId.ToString() ?? "anonymous";
+		using (LogContext.PushProperty("UserName", username))
+		{
+			await _next(context);
+		}
 	}
 
 	private static Task Reject(HttpContext context, int status, string error)
@@ -115,11 +122,11 @@ public class AuthMiddleware
 		return context.Response.WriteAsJsonAsync(new { error });
 	}
 
-	private static bool IsPublicRoute(PathString path)
+	private static bool IsPublicRoute(string path)
 	{
-		var p = path.Value ?? "";
-		return p.StartsWith("/health")
-			|| p.StartsWith("/scalar");
+		return path.StartsWith("/health")
+			|| path.StartsWith("/scalar")
+			|| path.StartsWith("/openapi");
 	}
 
 	private static long NextMidnightUtcEpoch()

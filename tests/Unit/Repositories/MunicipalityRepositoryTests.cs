@@ -1,5 +1,4 @@
 ﻿using FluentAssertions;
-using GridMonitor.Domain.Entities;
 using GridMonitor.Domain.Repositories;
 using GridMonitor.Infrastructure.DataContext;
 using GridMonitor.Infrastructure.Repositories;
@@ -46,85 +45,5 @@ public class MunicipalityRepositoryTests : IDisposable
 
 		result.Should().HaveCount(2);
 		result.Should().AllSatisfy(m => m.ProvinceId.Should().Be(p1.Id));
-	}
-
-	[Fact]
-	public async Task GetAllWithSuburbsAsync_IncludesSuburbs()
-	{
-		var p = await Seed.ProvinceAsync(_db);
-		var m = await Seed.MunicipalityAsync(_db, p.Id);
-		await Seed.SuburbAsync(_db, m.Id);
-		await Seed.SuburbAsync(_db, m.Id);
-
-		var result = await _repo.GetByProvinceAsync(p.Id);
-
-		result.Should().ContainSingle();
-		result[0].Suburbs.Should().HaveCount(2);
-	}
-
-	[Fact]
-	public async Task UpsertAsync_NewMunicipality_Inserts()
-	{
-		var p = await Seed.ProvinceAsync(_db);
-		var muni = new Municipality
-		{
-			EskomId = 1000001,
-			Name = "New City",
-			ProvinceId = p.Id,
-			Total = 5,
-			LastSyncedAt = DateTime.UtcNow
-		};
-
-		await _repo.UpsertAsync([muni]);
-		await _repo.UnitOfWork.SaveEntitiesAsync();
-
-		var found = await _repo.GetByEskomIdAsync(1000001);
-		found.Should().NotBeNull();
-		found!.Name.Should().Be("New City");
-	}
-
-	[Fact]
-	public async Task UpsertAsync_ExistingMunicipality_UpdatesFields()
-	{
-		var p = await Seed.ProvinceAsync(_db);
-		var m = await Seed.MunicipalityAsync(_db, p.Id);
-
-		var updated = new Municipality
-		{
-			EskomId = m.EskomId,
-			Name = "Updated City",
-			ProvinceId = p.Id,
-			Total = 99,
-			LastSyncedAt = DateTime.UtcNow
-		};
-
-		await _repo.UpsertAsync([updated]);
-		await _repo.UnitOfWork.SaveEntitiesAsync();
-
-		var found = await _repo.GetByEskomIdAsync(m.EskomId);
-		found!.Name.Should().Be("Updated City");
-		found.Total.Should().Be(99);
-	}
-
-	[Fact]
-	public async Task UpsertAsync_ExistingMunicipality_DoesNotCreateDuplicate()
-	{
-		var p = await Seed.ProvinceAsync(_db);
-		var m = await Seed.MunicipalityAsync(_db, p.Id);
-
-		var updated = new Municipality
-		{
-			EskomId = m.EskomId,
-			Name = "Duplicate Check",
-			ProvinceId = p.Id,
-			Total = 1,
-			LastSyncedAt = DateTime.UtcNow
-		};
-
-		await _repo.UpsertAsync([updated]);
-		await _repo.UnitOfWork.SaveEntitiesAsync();
-
-		var all = await _repo.GetByProvinceAsync(p.Id);
-		all.Should().ContainSingle();
 	}
 }

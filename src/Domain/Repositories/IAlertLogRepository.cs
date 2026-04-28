@@ -8,10 +8,10 @@ public interface IAlertLogRepository : IRepository
 	ValueTask<List<AlertLog>> GetBySubscriptionAsync(Guid subscriptionId, int limit, CancellationToken ct = default);
 
 	ValueTask<bool> WasAlertSentAsync(
-		Guid subscriptionId, 
-		int stage, 
+		Guid subscriptionId,
+		int stage,
 		AlertEvent alertEvent,
-		TimeSpan within, 
+		TimeSpan within,
 		CancellationToken ct = default);
 
 	ValueTask AddAsync(AlertLog log, CancellationToken ct = default);

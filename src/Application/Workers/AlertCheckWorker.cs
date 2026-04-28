@@ -35,7 +35,7 @@ public class AlertCheckWorker : BackgroundService
 			{
 				StagePollWorker.StageChangedSignal = false;
 				if (signalled) logger.LogInformation("Stage change signal detected, running alert engine immediately");
-				
+
 				try
 				{
 					await RunEngineAsync(stoppingToken);

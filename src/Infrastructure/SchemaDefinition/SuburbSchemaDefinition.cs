@@ -28,7 +28,8 @@ public class SuburbSchemaDefinition : IEntityTypeConfiguration<Suburb>
 			   .HasMaxLength(150);
 
 		builder.Property(x => x.LastSyncedAt)
-			   .IsRequired();
+			   .IsRequired()
+			   .HasDefaultValueSql("CURRENT_TIMESTAMP");
 
 		builder.HasOne(x => x.Municipality)
 			   .WithMany(x => x.Suburbs)

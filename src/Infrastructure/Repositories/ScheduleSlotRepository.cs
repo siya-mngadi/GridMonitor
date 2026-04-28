@@ -22,9 +22,9 @@ public class ScheduleSlotRepository : IScheduleSlotRepository
 	}
 
 	public async ValueTask<ScheduleSlot> GetByCompositeKeyAsync(
-	   int suburbId, 
+	   int suburbId,
 	   int stage,
-	   DayOfWeek dayNumber, 
+	   DayOfWeek dayNumber,
 	   TimeOnly startTime,
 	   CancellationToken ct = default)
 	{
@@ -37,7 +37,7 @@ public class ScheduleSlotRepository : IScheduleSlotRepository
 
 	public async ValueTask<List<ScheduleSlot>> GetBySuburbAndStageAsync(
 		int suburbId,
-		int stage, 
+		int stage,
 		CancellationToken ct = default)
 	{
 		return await context.ScheduleSlots.Where(s => s.SuburbId == suburbId && s.Stage <= stage)
@@ -48,8 +48,8 @@ public class ScheduleSlotRepository : IScheduleSlotRepository
 
 	public async ValueTask<List<ScheduleSlot>> GetUpcomingForSuburbAsync(
 		int suburbId,
-		int currentStage, 
-		DayOfWeek dayNumber, 
+		int currentStage,
+		DayOfWeek dayNumber,
 		TimeOnly afterTime,
 		CancellationToken ct = default)
 	{
@@ -70,15 +70,13 @@ public class ScheduleSlotRepository : IScheduleSlotRepository
 			UpdateByProperties = [nameof(ScheduleSlot.SuburbId), nameof(ScheduleSlot.Stage), nameof(ScheduleSlot.ScheduleDay), nameof(ScheduleSlot.StartTime)],
 			PropertiesToIncludeOnUpdate =
 			[
-				nameof(ScheduleSlot.DayLabel),
-				nameof(ScheduleSlot.StartTime),
 				nameof(ScheduleSlot.EndTime),
 				nameof(ScheduleSlot.DataHash)
 			]
 		};
 
 		await context.BulkInsertOrUpdateAsync(slots, config, cancellationToken: ct);
-		return config.StatsInfo?.StatsNumberInserted + config.StatsInfo?.StatsNumberInserted ?? 0;
+		return config.StatsInfo?.StatsNumberInserted + config.StatsInfo?.StatsNumberUpdated ?? 0;
 	}
 
 	public async ValueTask DeleteBySuburbAsync(int suburbId, CancellationToken ct = default)

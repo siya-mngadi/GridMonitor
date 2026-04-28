@@ -18,10 +18,10 @@ public class SubscriptionRepositoryTests : IDisposable
 	private async Task<(User user, int suburbId)> SeedUserAndSuburbAsync()
 	{
 		var p = await Seed.ProvinceAsync(_db);
-		var m = await Seed.MunicipalityAsync(_db, p.Id);
-		var s = await Seed.SuburbAsync(_db, m.Id);
+		var m = await Seed.MunicipalityAsync(_db, p.EskomId);
+		var s = await Seed.SuburbAsync(_db, m.EskomId);
 		var u = await Seed.UserAsync(_db);
-		return (u, s.Id);
+		return (u, s.EskomId);
 	}
 
 	[Fact]

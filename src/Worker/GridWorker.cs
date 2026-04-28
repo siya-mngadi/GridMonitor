@@ -95,7 +95,7 @@ internal class GridWorker : BackgroundService
 				var updatedMunicipalities = await gridService.UpsertMunicipalityAsync(municipalities, stoppingToken);
 				logger.LogInformation("Processed {Count} municipalities for province {ProvinceName}", updatedMunicipalities, province.Name);
 				syncRun.MunicipalitiesProcessed += municipalities.Count;
-				
+
 				foreach (var municipality in municipalities)
 				{
 					var suburbs = await client.GetSuburbsAsync(municipality, stoppingToken);

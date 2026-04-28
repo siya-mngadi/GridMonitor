@@ -144,7 +144,7 @@ public class AlertLogRepositoryTests : IDisposable
 		await Seed.AlertLogAsync(_db, subId, sentAt: now.AddDays(-1));  // kept
 		await Seed.AlertLogAsync(_db, subId, sentAt: now.AddHours(-2)); // kept
 
-		await _repo.PurgeOlderThanAsync(TimeSpan.FromDays(30));
+		await _repo.PurgeOlderThanAsync(TimeSpan.FromDays(25));
 		await _repo.UnitOfWork.SaveEntitiesAsync();
 
 		var remaining = await _repo.GetBySubscriptionAsync(subId, limit: 100);

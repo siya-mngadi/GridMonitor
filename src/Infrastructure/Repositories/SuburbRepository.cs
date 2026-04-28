@@ -49,6 +49,7 @@ public class SuburbRepository : ISuburbRepository
 			.AsNoTracking()
 			.Include(s => s.Municipality)
 			.Where(s => s.MunicipalityId == municipalityId)
+			.OrderBy(s => s.Name)
 			.ToListAsync(ct);
 	}
 
@@ -57,8 +58,9 @@ public class SuburbRepository : ISuburbRepository
 		return await context.Suburbs
 			.AsNoTracking()
 			.Include(s => s.Municipality)
-			.Where(s => EF.Functions.ILike(s.Name, $"%{searchPhrase}%") || EF.Functions.ILike(s.Municipality.Name, $"%{searchPhrase}%"))
+			.Where(s => EF.Functions.Like(s.Name, $"%{searchPhrase}%") || EF.Functions.Like(s.Municipality.Name, $"%{searchPhrase}%"))
 			.Take(limit)
+			.OrderBy(s => s.Name)
 			.ToListAsync(ct);
 	}
 
@@ -75,8 +77,7 @@ public class SuburbRepository : ISuburbRepository
 				nameof(Suburb.LastSyncedAt)
 			]
 		};
-		await context.BulkInsertOrUpdateAsync(suburbs, config, cancellationToken: ct);
-
+		await context.BulkInsertOrUpdateAsync(suburbs, config, type: typeof(Suburb), cancellationToken: ct);
 		return config.StatsInfo?.StatsNumberInserted + config.StatsInfo?.StatsNumberUpdated ?? 0;
 	}
 }

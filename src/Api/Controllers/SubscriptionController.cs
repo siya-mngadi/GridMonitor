@@ -17,7 +17,7 @@ public class SubscriptionController : ControllerBase
 	private readonly ISubscriptionService subscriptionService;
 	private readonly GridMapper mapper = new();
 
-	private readonly SubscribeRequestValidator subscribeValidator = new(); 
+	private readonly SubscribeRequestValidator subscribeValidator = new();
 	private readonly UpdateAlertWindowValidator updateAlertWindowValidator = new();
 	private readonly AddChannelRequestValidator addChannelValidator = new();
 	public SubscriptionController(ISubscriptionService subscriptionService)
@@ -31,7 +31,7 @@ public class SubscriptionController : ControllerBase
 		var userId = HttpContext.Items["UserId"] as string;
 		if (!Guid.TryParse(userId, out var userGuid))
 			return Unauthorized();
-		
+
 		var result = await subscriptionService.GetUserSubscriptionsAsync(userGuid);
 		if (!result.Success)
 			return BadRequest(new { error = result.Error });
@@ -46,7 +46,7 @@ public class SubscriptionController : ControllerBase
 		var validationResult = subscribeValidator.Validate(request);
 		if (!validationResult.IsValid)
 			return BadRequest(new { errors = string.Join(", ", validationResult.Errors.Select(e => e.ErrorMessage)) });
-		
+
 		var userId = HttpContext.Items["UserId"] as string;
 		if (!Guid.TryParse(userId, out var userGuid))
 			return Unauthorized();
@@ -79,7 +79,7 @@ public class SubscriptionController : ControllerBase
 		var validationResult = updateAlertWindowValidator.Validate(request);
 		if (!validationResult.IsValid)
 			return BadRequest(new { errors = string.Join(", ", validationResult.Errors.Select(e => e.ErrorMessage)) });
-		
+
 		var userId = HttpContext.Items["UserId"] as string;
 		if (!Guid.TryParse(userId, out var userGuid))
 			return Unauthorized();
@@ -87,7 +87,7 @@ public class SubscriptionController : ControllerBase
 		var result = await subscriptionService.UpdateAlertWindowAsync(userGuid, id, request.AlertMinutesBefore);
 		if (!result.Success)
 			return BadRequest(new { error = result.Error });
-		
+
 		return Ok();
 	}
 
@@ -97,7 +97,7 @@ public class SubscriptionController : ControllerBase
 		var validationResult = addChannelValidator.Validate(request);
 		if (!validationResult.IsValid)
 			return BadRequest(new { errors = string.Join(", ", validationResult.Errors.Select(e => e.ErrorMessage)) });
-		
+
 		var userId = HttpContext.Items["UserId"] as string;
 		if (!Guid.TryParse(userId, out var userGuid))
 			return Unauthorized();
@@ -109,7 +109,7 @@ public class SubscriptionController : ControllerBase
 
 		return CreatedAtAction(nameof(GetSubscriptions), new { id = result.Value!.Id }, mapper.ToResponse(result.Value!));
 	}
-	
+
 	[HttpDelete("channels/{channelId:guid}")]
 	public async ValueTask<IActionResult> RemoveChannel(Guid channelId)
 	{
@@ -120,7 +120,7 @@ public class SubscriptionController : ControllerBase
 		var result = await subscriptionService.RemoveChannelAsync(userGuid, channelId);
 		if (!result.Success)
 			return BadRequest(new { error = result.Error });
-		
+
 		return NoContent();
 	}
 }

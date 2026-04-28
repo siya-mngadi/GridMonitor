@@ -27,11 +27,11 @@ public class UserController : ControllerBase
 		var userId = HttpContext.Items["UserId"] as string;
 		if (!Guid.TryParse(userId, out var userGuid))
 			return Unauthorized();
-		
+
 		var result = await userService.GetByIdAsync(userGuid);
 		if (!result.Success)
 			return BadRequest(new { error = result.Error });
-		
+
 		return Ok(mapper.ToResponse(result.Value!));
 	}
 

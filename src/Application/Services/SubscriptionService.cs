@@ -67,7 +67,7 @@ public class SubscriptionService : ISubscriptionService
 			ChannelType = type,
 			Destination = destination.Trim(),
 			WebhookSecret = webhookSecret,
-			Active = true			
+			Active = true
 		};
 
 		await channelRepository.AddAsync(channel, ct);
@@ -204,7 +204,6 @@ public class SubscriptionService : ISubscriptionService
 
 	private static bool IsValidSaPhone(string phone)
 	{
-		if (!int.TryParse(phone, out _)) return false;
 		var digits = new string([.. phone.Where(char.IsDigit)]);
 		// SA mobile: 10 digits starting with 0, or 11 digits starting with 27
 		return (digits.Length == 10 && digits.StartsWith('0')) ||

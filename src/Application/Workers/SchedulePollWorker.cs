@@ -1,5 +1,4 @@
 ﻿using GridMonitor.Domain.Repositories;
-using GridMonitor.Domain.Services;
 using GridMonitor.Infrastructure.Proxies;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -54,7 +53,7 @@ public class SchedulePollWorker : BackgroundService
 	{
 		var scope = scopeFactory.CreateScope();
 		var scraper = scope.ServiceProvider.GetRequiredService<GridClient>();
-		var scheduleRepo= scope.ServiceProvider.GetRequiredService<IScheduleSlotRepository>();
+		var scheduleRepo = scope.ServiceProvider.GetRequiredService<IScheduleSlotRepository>();
 		var subscriptionRepo = scope.ServiceProvider.GetRequiredService<IAlertSubscriptionRepository>();
 
 
@@ -69,7 +68,7 @@ public class SchedulePollWorker : BackgroundService
 			var schedules = await parser.ParseScheduleAsync(suburb, stage, scheduleHtml, ct);
 
 			await scheduleRepo.UpsertSlotsAsync(schedules, ct);
-			
+
 			await Task.Delay(TimeSpan.FromSeconds(10), ct);
 		}
 

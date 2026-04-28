@@ -26,7 +26,7 @@ public class ApiKeyController : ControllerBase
 		if (!Guid.TryParse(userId, out var userGuid))
 			return Unauthorized();
 		var result = await apiKeyService.GetApiKeysAsync(userGuid);
-		
+
 		if (!result.Success)
 			return BadRequest(new { error = result.Error });
 		var items = mapper.ToResponse(result.Value!);
@@ -40,10 +40,10 @@ public class ApiKeyController : ControllerBase
 		if (!Guid.TryParse(userId, out var userGuid))
 			return Unauthorized();
 		var result = await apiKeyService.IssueAsync(userGuid);
-		
+
 		if (!result.Success)
 			return BadRequest(new { error = result.Error });
-		
+
 		return Ok(result.Value);
 	}
 
@@ -57,7 +57,7 @@ public class ApiKeyController : ControllerBase
 
 		if (!result.Success)
 			return BadRequest(new { error = result.Error });
-		
+
 		return Ok(result.Value);
 	}
 
@@ -71,7 +71,7 @@ public class ApiKeyController : ControllerBase
 
 		if (!result.Success)
 			return BadRequest(new { error = result.Error });
-		
+
 		return NoContent();
 	}
 }

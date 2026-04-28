@@ -34,6 +34,7 @@ public class AlertChannelSchemaDefinition : IEntityTypeConfiguration<AlertChanne
 
 		builder.HasOne(x => x.Subscription)
 			   .WithMany(x => x.Channels)
+			   .HasPrincipalKey(x => x.Id)
 			   .HasForeignKey(x => x.SubscriptionId)
 			   .OnDelete(DeleteBehavior.Cascade);
 	}

@@ -36,6 +36,7 @@ internal class UserSchemaDefinition : IEntityTypeConfiguration<User>
 			   .HasDefaultValue(true);
 
 		builder.Property(x => x.CreatedAt)
-			   .IsRequired();
+			   .IsRequired()
+			   .HasDefaultValueSql("CURRENT_TIMESTAMP");
 	}
 }

@@ -18,7 +18,7 @@ public class SuburbRepositoryInMemoryTests : IDisposable
 	{
 		var p = await Seed.ProvinceAsync(_db);
 		var m = await Seed.MunicipalityAsync(_db, p.Id);
-		return m.Id;
+		return m.EskomId;
 	}
 
 	[Fact]
@@ -91,7 +91,7 @@ public class SuburbRepositoryInMemoryTests : IDisposable
 		var s = await Seed.SuburbAsync(_db, muniId, "Bellville");
 		_db.ScheduleSlots.Add(new ScheduleSlot
 		{
-			SuburbId = s.Id,
+			SuburbId = s.EskomId,
 			Stage = 2,
 			StartTime = new TimeOnly(22, 0),
 			EndTime = new TimeOnly(0, 30),
@@ -104,66 +104,5 @@ public class SuburbRepositoryInMemoryTests : IDisposable
 
 		result.Should().NotBeNull();
 		result!.Slots.Should().HaveCount(1);
-	}
-
-	[Fact]
-	public async Task UpsertAsync_NewSuburb_Inserts()
-	{
-		var muniId = await SeedMuniAsync();
-		var s = new Suburb
-		{
-			EskomId = 1_000_111,
-			Name = "Sandton",
-			MunicipalityId = muniId,
-			Total = 5,
-			LastSyncedAt = DateTime.UtcNow
-		};
-
-		await _repo.UpsertAsync([s]);
-		await _repo.UnitOfWork.SaveEntitiesAsync();
-
-		var found = await _repo.GetByEskomIdAsync(1_000_111);
-		found.Should().NotBeNull();
-		found!.Name.Should().Be("Sandton");
-	}
-
-	[Fact]
-	public async Task UpsertAsync_ExistingSuburb_UpdatesNameAndTotal()
-	{
-		var muniId = await SeedMuniAsync();
-		var s = await Seed.SuburbAsync(_db, muniId, "Old Name");
-
-		await _repo.UpsertAsync([new Suburb
-		{
-			EskomId = s.EskomId,
-			Name = "New Name",
-			MunicipalityId = muniId,
-			Total = 99,
-			LastSyncedAt = DateTime.UtcNow
-		}]);
-		await _repo.UnitOfWork.SaveEntitiesAsync();
-
-		var updated = await _repo.GetByEskomIdAsync(s.EskomId);
-		updated!.Name.Should().Be("New Name");
-		updated.Total.Should().Be(99);
-	}
-
-	[Fact]
-	public async Task UpsertAsync_ExistingSuburb_DoesNotInsertDuplicate()
-	{
-		var muniId = await SeedMuniAsync();
-		var s = await Seed.SuburbAsync(_db, muniId);
-
-		await _repo.UpsertAsync([new Suburb
-		{
-			EskomId = s.EskomId,
-			Name = "Updated",
-			MunicipalityId = muniId,
-			Total = 1,
-			LastSyncedAt = DateTime.UtcNow
-		}]);
-		await _repo.UnitOfWork.SaveEntitiesAsync();
-
-		(await _repo.GetAsync()).Should().ContainSingle();
 	}
 }

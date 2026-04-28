@@ -17,7 +17,7 @@ public class AlertEngine
 	private readonly IAlertSubscriptionRepository subscriptionRepository;
 	private readonly IAlertLogRepository logRepository;
 	private readonly IStageSnapshotRepository snapshotRepository;
-//	private readonly INotificationDispatcher dispatcher;
+	//	private readonly INotificationDispatcher dispatcher;
 	private readonly ILogger<AlertEngine> logger;
 
 	// Look forward far enough to catch the next check cycle too — prevents
@@ -31,13 +31,13 @@ public class AlertEngine
 		IAlertSubscriptionRepository subscriptionRepository,
 		IAlertLogRepository logRepository,
 		IStageSnapshotRepository snapshotRepository,
-	//	INotificationDispatcher dispatcher,
+		//	INotificationDispatcher dispatcher,
 		ILogger<AlertEngine> logger)
 	{
 		this.subscriptionRepository = subscriptionRepository;
 		this.logRepository = logRepository;
 		this.snapshotRepository = snapshotRepository;
-	//_dispatcher = dispatcher;
+		//_dispatcher = dispatcher;
 		this.logger = logger;
 	}
 
@@ -102,7 +102,7 @@ public class AlertEngine
 		DayOfWeek todayDay,
 		CancellationToken ct)
 	{
-		if (!sub.Active|| sub.Channels.Count == 0) return;
+		if (!sub.Active || sub.Channels.Count == 0) return;
 
 		// Find slots active at the current stage for today's block that
 		// start within [now, now + alertMinutesBefore + buffer]
@@ -199,9 +199,9 @@ public class AlertEngine
 
 	// Must match the format used by make_idempotency_key() in migration 002
 	private static string BuildIdempotencyKey(
-		Guid subscriptionId, 
-		short stage, 
-		string dateSast, 
+		Guid subscriptionId,
+		short stage,
+		string dateSast,
 		TimeOnly slotStart)
 		=> $"{subscriptionId}:{stage}:{dateSast}:{slotStart:HH:mm}";
 

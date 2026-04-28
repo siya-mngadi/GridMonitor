@@ -4,7 +4,6 @@ using GridMonitor.Domain.Services;
 using GridMonitor.Domain.Shared;
 using GridMonitor.Domain.ValueObjects;
 using Microsoft.Extensions.Caching.Distributed;
-using Microsoft.Extensions.Caching.Memory;
 
 namespace GridMonitor.Application.Services;
 
@@ -15,7 +14,7 @@ public class UsageService : IUsageService
 	private readonly IDistributedCache cache;
 
 	public UsageService(
-		IApiKeyRepository apiKeyRepository, 
+		IApiKeyRepository apiKeyRepository,
 		IUserRepository userRepository,
 		IDistributedCache cache)
 	{

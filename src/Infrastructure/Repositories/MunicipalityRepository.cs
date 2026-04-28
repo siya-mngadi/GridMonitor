@@ -36,7 +36,7 @@ public class MunicipalityRepository : IMunicipalityRepository
 	{
 		return await context.Municipalities
 			.AsNoTracking()
-			.Where(m => m.ProvinceId == provinceId	)
+			.Where(m => m.ProvinceId == provinceId)
 			.ToListAsync(ct);
 	}
 
@@ -63,7 +63,7 @@ public class MunicipalityRepository : IMunicipalityRepository
 				nameof(Municipality.LastSyncedAt)
 			]
 		};
-		await context.BulkInsertOrUpdateAsync(municipalities, config, cancellationToken:ct);
+		await context.BulkInsertOrUpdateAsync(municipalities, config, cancellationToken: ct);
 
 		return config.StatsInfo?.StatsNumberInserted + config.StatsInfo?.StatsNumberInserted ?? 0;
 	}

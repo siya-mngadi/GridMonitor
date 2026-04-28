@@ -18,7 +18,7 @@ public class AuthMiddleware
 	{
 		var endpoint = context.GetEndpoint();
 		var allowAnonymous = endpoint?.Metadata?.GetMetadata<IAllowAnonymous>();
-		
+
 		// Public routes bypass auth entirely
 		if (allowAnonymous != null || IsPublicRoute(context.Request.Path))
 		{
@@ -43,7 +43,7 @@ public class AuthMiddleware
 
 			if (user is null)
 			{
-				await Reject(context, 401,"No valid account found for this user. Please complete sign up.");
+				await Reject(context, 401, "No valid account found for this user. Please complete sign up.");
 				return;
 			}
 
@@ -106,7 +106,7 @@ public class AuthMiddleware
 		}
 
 		// No credential 
-		await Reject(context, 401,"Authentication required. Please sign up");
+		await Reject(context, 401, "Authentication required. Please sign up");
 	}
 
 	private static Task Reject(HttpContext context, int status, string error)

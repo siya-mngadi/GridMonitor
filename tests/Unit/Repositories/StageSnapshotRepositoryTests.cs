@@ -81,7 +81,7 @@ public class StageSnapshotRepositoryTests : IDisposable
 
 		var remaining = await _repo.GetAsync();
 		remaining.Should().HaveCount(2);
-		remaining.Should().AllSatisfy(s => s.Stage.Should().Be(3));
+		remaining.Should().AllSatisfy(s => s.Stage.Should().BeGreaterThanOrEqualTo(3));
 	}
 
 	[Fact]

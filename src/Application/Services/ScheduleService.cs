@@ -67,6 +67,9 @@ public class ScheduleService : IScheduleService
 
 	public async ValueTask<Result<IList<Suburb>>> SearchSuburbsAsync(string query, CancellationToken ct = default)
 	{
+		if(string.IsNullOrWhiteSpace(query) || query.Length < 2)
+			return Result<IList<Suburb>>.Fail("Query must be at least 2 characters long.");
+
 		var results = await suburbRepository.SearchAsync(query.Trim(), limit: 20, ct);
 		return Result<IList<Suburb>>.Ok(results);
 	}

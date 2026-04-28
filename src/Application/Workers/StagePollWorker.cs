@@ -28,7 +28,7 @@ public class StagePollWorker : BackgroundService
 		logger.LogInformation("Stage Poll Worker started — checking every {M}m", PollInterval.TotalMinutes);
 
 		timer = new PeriodicTimer(PollInterval);
-		while (await timer.WaitForNextTickAsync(stoppingToken)) 
+		while (await timer.WaitForNextTickAsync(stoppingToken))
 		{
 			try
 			{

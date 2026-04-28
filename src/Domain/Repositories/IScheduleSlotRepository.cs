@@ -13,7 +13,7 @@ public interface IScheduleSlotRepository : IRepository
 
 	ValueTask<List<ScheduleSlot>> GetBySuburbAndStageAsync(
 		int suburbId,
-		int stage, 
+		int stage,
 		CancellationToken ct = default);
 
 	ValueTask PurgeOlderThanAsync(TimeSpan age, CancellationToken ct = default);

@@ -37,6 +37,7 @@ public class AlertSubscriptionSchemaDefinition : IEntityTypeConfiguration<AlertS
 
 		builder.HasOne(x => x.Suburb)
 			   .WithMany()
+			   .HasPrincipalKey(x => x.EskomId)
 			   .HasForeignKey(x => x.SuburbId)
 			   .OnDelete(DeleteBehavior.Restrict);
 	}

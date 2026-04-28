@@ -22,6 +22,6 @@ public class ProvinceSchemaDefinition : IEntityTypeConfiguration<Province>
 
 		builder.Property(x => x.LastSyncedAt)
 			   .ValueGeneratedOnAddOrUpdate()
-			   .HasDefaultValueSql("NOW() AT TIME ZONE 'UTC'");
+			   .HasDefaultValueSql("CURRENT_TIMESTAMP");
 	}
 }

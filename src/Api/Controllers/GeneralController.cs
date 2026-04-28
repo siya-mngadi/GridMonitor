@@ -10,7 +10,7 @@ namespace GridMonitor.Api.Controllers;
 [Route("api/v{version:apiVersion}")]
 public class GeneralController : ControllerBase
 {
-	public GeneralController() { } 
+	public GeneralController() { }
 
 	[Route("health")]
 	public IActionResult GetHealth()

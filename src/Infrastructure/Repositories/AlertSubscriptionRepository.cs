@@ -7,7 +7,6 @@ namespace GridMonitor.Infrastructure.Repositories;
 
 public class AlertSubscriptionRepository : IAlertSubscriptionRepository
 {
-
 	private readonly AppDbContext context;
 	public AlertSubscriptionRepository(AppDbContext context)
 	{
@@ -23,13 +22,17 @@ public class AlertSubscriptionRepository : IAlertSubscriptionRepository
 
 	public async ValueTask<List<AlertSubscription>> GetAllActiveWithDetailsAsync(CancellationToken ct = default)
 	{
-		return await context.Subscriptions
+		var subscriptions = await context.Subscriptions
 			  .Where(s => s.Active)
 			  .Include(s => s.User)
 			  .Include(s => s.Suburb)
-			  .Include(s => s.Channels.Where(c => c.Active))
-			  .AsSplitQuery()
 			  .ToListAsync(ct);
+
+		foreach (var subscription in subscriptions)
+		{
+			subscription.Channels = await context.Channels.Where(c => c.SubscriptionId == subscription.Id && c.Active).ToListAsync(ct);
+		}
+		return subscriptions;
 	}
 
 	public ValueTask<AlertSubscription> GetByIdAsync(Guid id, CancellationToken ct = default)
@@ -45,9 +48,10 @@ public class AlertSubscriptionRepository : IAlertSubscriptionRepository
 	public async ValueTask<List<AlertSubscription>> GetByUserAsync(Guid userId, CancellationToken ct = default)
 	{
 		return await context.Subscriptions
-			  .Where(s => s.UserId == userId)
-			  .Include(s => s.Suburb)
-			  .Include(s => s.Channels)
-			  .ToListAsync(ct);
+				.AsNoTracking()
+				.Where(s => s.UserId.Equals(userId))
+				.Include(s => s.Channels)
+				.Include(s => s.Suburb)
+				.ToListAsync(ct);
 	}
 }

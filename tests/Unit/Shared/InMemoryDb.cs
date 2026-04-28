@@ -11,6 +11,7 @@ public class InMemoryDb
 		var opts = new DbContextOptionsBuilder<AppDbContext>()
 			.UseInMemoryDatabase(name)
 			.Options;
+
 		return new AppDbContext(opts);
 	}
 }

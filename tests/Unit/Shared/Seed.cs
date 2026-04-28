@@ -2,16 +2,26 @@
 using GridMonitor.Domain.Entities;
 using GridMonitor.Domain.Enums;
 using GridMonitor.Infrastructure.DataContext;
+using Microsoft.EntityFrameworkCore;
 
 namespace GridMonitor.Tests.Unit.Shared;
 
 public static class Seed
 {
+	public static readonly Guid KeyCloakId = new("11111111-1111-1111-1111-111111111111");
 	public static async Task<Province> ProvinceAsync(AppDbContext db, int eskomId = 1)
 	{
 		var p = new Province { EskomId = eskomId, Name = $"Province-{eskomId}", LastSyncedAt = DateTime.MinValue };
-		db.Provinces.Add(p);
-		await db.SaveChangesAsync();
+
+		if (await db.Provinces.AnyAsync(x => x.EskomId == eskomId))
+		{
+			p = await db.Provinces.FirstAsync(x => x.EskomId == eskomId);
+		}
+		else
+		{
+			db.Provinces.Add(p);
+			await db.SaveChangesAsync();
+		}
 		return p;
 	}
 
@@ -34,7 +44,7 @@ public static class Seed
 	{
 		var s = new Suburb
 		{
-			EskomId = Random.Shared.Next(10_000, 99_999),
+			EskomId = Random.Shared.Next(100_000, 999_999),
 			Name = name ?? $"Suburb-{Guid.NewGuid():N}",
 			MunicipalityId = municipalityId,
 			Total = 3,
@@ -93,6 +103,7 @@ public static class Seed
 		var u = new User
 		{
 			Id = Guid.NewGuid(),
+			KeycloakId = KeyCloakId.ToString(),
 			Email = email ?? $"user-{Guid.NewGuid():N}@test.com",
 			Password = "hash",
 			Tier = tier,

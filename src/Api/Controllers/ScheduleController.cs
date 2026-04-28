@@ -37,7 +37,7 @@ public class ScheduleController : ControllerBase
 			return BadRequest(new { error = result.Error });
 
 		var items = mapper.ToResponse(result.Value!);
-		return Ok(new { results =  items, count = result.Value.Count });
+		return Ok(new { results = items, count = result.Value.Count });
 	}
 
 	[HttpGet("schedule/{suburbId:int}")]

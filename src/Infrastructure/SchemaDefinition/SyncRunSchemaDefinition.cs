@@ -36,7 +36,7 @@ internal class SyncRunSchemaDefinition : IEntityTypeConfiguration<SyncRun>
 
 		builder.Property(x => x.StartedAt)
 			   .IsRequired()
-			   .HasDefaultValueSql("NOW() AT TIME ZONE 'UTC'");
+			   .HasDefaultValueSql("CURRENT_TIMESTAMP");
 
 		// FinishedAt is nullable — null while the run is in progress
 		builder.Property(x => x.FinishedAt)

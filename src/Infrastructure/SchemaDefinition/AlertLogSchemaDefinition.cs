@@ -46,7 +46,8 @@ public class AlertLogSchemaDefinition : IEntityTypeConfiguration<AlertLog>
 			   .HasDefaultValue(1);
 
 		builder.Property(x => x.SentAt)
-			   .IsRequired();
+			   .IsRequired()
+			   .HasDefaultValueSql("CURRENT_TIMESTAMP");
 
 		builder.HasOne(x => x.Subscription)
 			   .WithMany(x => x.Logs)

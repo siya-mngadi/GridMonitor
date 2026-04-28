@@ -39,6 +39,6 @@ public class ApiKeyRepository : IApiKeyRepository
 
 	public async ValueTask<List<ApiKey>> GetApiKeysAsync(Guid userId, CancellationToken ct = default)
 	{
-		return await context.ApiKeys.Where(k => k.Active && k.UserId == userId ).ToListAsync(ct);
+		return await context.ApiKeys.Where(k => k.Active && k.UserId == userId).ToListAsync(ct);
 	}
 }

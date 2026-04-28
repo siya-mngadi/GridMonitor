@@ -24,7 +24,8 @@ public class MunicipalitySchemaDefinition : IEntityTypeConfiguration<Municipalit
 			   .HasMaxLength(150);
 
 		builder.Property(x => x.LastSyncedAt)
-			   .IsRequired();
+			   .IsRequired()
+			   .HasDefaultValueSql("CURRENT_TIMESTAMP");
 
 		builder.HasOne(x => x.Province)
 			   .WithMany(x => x.Municipalities)

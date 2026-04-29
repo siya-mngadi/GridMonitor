@@ -3,6 +3,7 @@ using GridMonitor.Api.Middleware;
 using GridMonitor.Application;
 using GridMonitor.Infrastructure;
 using Keycloak.AuthServices.Authentication;
+using Keycloak.AuthServices.Authorization;
 using Microsoft.AspNetCore.HttpOverrides;
 using Scalar.AspNetCore;
 using Serilog;
@@ -42,6 +43,8 @@ public partial class Program
 
 		// Add Keycloak authentication
 		builder.Services.AddKeycloakWebApiAuthentication(builder.Configuration);
+
+		builder.Services.AddKeycloakAuthorization(builder.Configuration);
 
 		// Add distributed memory cache
 		builder.Services.AddDistributedMemoryCache();

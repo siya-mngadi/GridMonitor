@@ -1,5 +1,10 @@
-﻿using GridMonitor.Domain.Repositories;
+﻿using Duende.AccessTokenManagement;
+using Duende.IdentityModel.Client;
+using GridMonitor.Domain.Repositories;
 using GridMonitor.Infrastructure.DataContext;
+using GridMonitor.Infrastructure.Proxies;
+using Keycloak.AuthServices.Common;
+using Keycloak.AuthServices.Sdk;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -13,6 +18,29 @@ public static class DependencyInjection
 		services.AddScopedRepositoriesFromAssembly();
 		services.AddDatabase(configuration);
 		services.AddWorkerServices();
+		services.AddProxyClients(configuration);
+		return services;
+	}
+
+	public static IServiceCollection AddProxyClients(this IServiceCollection services, IConfiguration configuration)
+	{
+		// Add Keycloak admin client configuration.
+		var tokenClientName = "keycloak-admin";
+		var options = configuration.GetKeycloakOptions<KeycloakAdminClientOptions>();
+		services
+			.AddClientCredentialsTokenManagement()
+			.AddClient(tokenClientName, client => {
+				client.ClientId = ClientId.Parse(options.Resource);
+				client.ClientSecret = ClientSecret.Parse(options.Credentials.Secret);
+				client.TokenEndpoint = new Uri(options.KeycloakTokenEndpoint);
+			});
+
+		services
+			.AddKeycloakAdminHttpClient(options)
+			.AddClientCredentialsTokenHandler(ClientCredentialsClientName.Parse(tokenClientName));
+
+		// Add eskom client proxy.
+		services.AddHttpClient<GridClient>();
 		return services;
 	}
 

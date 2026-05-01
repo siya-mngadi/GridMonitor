@@ -2,7 +2,6 @@
 using GridMonitor.Application.Services;
 using GridMonitor.Application.Workers;
 using GridMonitor.Domain.Services;
-using GridMonitor.Infrastructure.Proxies;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -15,14 +14,7 @@ public static class DependencyInjection
 		services.AddConfiguration(configuration);
 		services.AddServices();
 		services.AddHostedServices();
-		services.AddProxyClients();
 		services.AddScoped<AlertEngine>();
-		return services;
-	}
-
-	public static IServiceCollection AddProxyClients(this IServiceCollection services)
-	{
-		services.AddHttpClient<GridClient>();
 		return services;
 	}
 

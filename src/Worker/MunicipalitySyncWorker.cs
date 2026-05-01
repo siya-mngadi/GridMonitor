@@ -1,6 +1,7 @@
 ﻿using Cronos;
 using GridMonitor.Domain.Entities;
 using GridMonitor.Domain.Enums;
+using GridMonitor.Infrastructure.Proxies;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
@@ -10,14 +11,14 @@ using Polly.Retry;
 
 namespace GridMonitor.Worker;
 
-internal class GridWorker : BackgroundService
+internal class MunicipalitySyncWorker : BackgroundService
 {
 	private readonly IServiceScopeFactory scopeFactory;
-	private readonly ILogger<GridWorker> logger;
+	private readonly ILogger<MunicipalitySyncWorker> logger;
 
 	private readonly ResiliencePipeline pipeline;
 	private readonly CronExpression cron;
-	public GridWorker(IServiceScopeFactory scopeFactory, ILogger<GridWorker> logger)
+	public MunicipalitySyncWorker(IServiceScopeFactory scopeFactory, ILogger<MunicipalitySyncWorker> logger)
 	{
 		this.scopeFactory = scopeFactory;
 		this.logger = logger;

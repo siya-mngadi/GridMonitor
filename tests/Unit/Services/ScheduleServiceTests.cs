@@ -70,7 +70,7 @@ public class ScheduleServiceTests
 	[Fact]
 	public async Task GetSchedule_SuburbNotFound_Fails()
 	{
-		_suburbs.GetByIdAsync(Arg.Any<int>()).Returns((Suburb?)null);
+		_suburbs.GetByIdAsync(Arg.Any<int>()).Returns(default(Suburb));
 
 		var result = await _service.GetScheduleAsync(999);
 
@@ -131,7 +131,7 @@ public class ScheduleServiceTests
 	[Fact]
 	public async Task GetUpcoming_SuburbNotFound_Fails()
 	{
-		_suburbs.GetByIdAsync(Arg.Any<int>()).Returns((Suburb?)null);
+		_suburbs.GetByIdAsync(Arg.Any<int>()).Returns(default(Suburb));
 
 		var result = await _service.GetUpcomingAsync(999, currentStage: 2);
 

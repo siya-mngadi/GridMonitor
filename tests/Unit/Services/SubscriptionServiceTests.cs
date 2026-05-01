@@ -59,7 +59,7 @@ public class SubscriptionServiceTests
 	[Fact]
 	public async Task Subscribe_SuburbNotFound_Fails()
 	{
-		_suburbs.GetByIdAsync(Arg.Any<int>()).Returns((Suburb?)null);
+		_suburbs.GetByIdAsync(Arg.Any<int>()).Returns(default(Suburb));
 
 		var result = await _service.SubscribeAsync(Guid.NewGuid(), 99, 30);
 
@@ -71,7 +71,7 @@ public class SubscriptionServiceTests
 	public async Task Subscribe_UserNotFound_Fails()
 	{
 		_suburbs.GetByIdAsync(1).Returns(GenerateMockObjects.Suburb());
-		_users.GetByIdAsync(Arg.Any<Guid>()).Returns((User?)null);
+		_users.GetByIdAsync(Arg.Any<Guid>()).Returns(default(User));
 
 		var result = await _service.SubscribeAsync(Guid.NewGuid(), 1, 30);
 
@@ -134,7 +134,7 @@ public class SubscriptionServiceTests
 		var user = GenerateMockObjects.User();
 		_suburbs.GetByIdAsync(1).Returns(GenerateMockObjects.Suburb());
 		_users.GetByIdAsync(user.Id).Returns(user);
-		_subs.GetByUserAndSuburbAsync(user.Id, 1).Returns((AlertSubscription?)null);
+		_subs.GetByUserAndSuburbAsync(user.Id, 1).Returns(default(AlertSubscription));
 
 		await _service.SubscribeAsync(user.Id, 1, 30);
 
@@ -162,7 +162,7 @@ public class SubscriptionServiceTests
 	[Fact]
 	public async Task Unsubscribe_SubscriptionNotFound_Fails()
 	{
-		_subs.GetByIdAsync(Arg.Any<Guid>()).Returns((AlertSubscription?)null);
+		_subs.GetByIdAsync(Arg.Any<Guid>()).Returns(default(AlertSubscription));
 
 		var result = await _service.UnsubscribeAsync(Guid.NewGuid(), Guid.NewGuid());
 
@@ -196,8 +196,10 @@ public class SubscriptionServiceTests
 		result.Error.Should().Contain("already inactive");
 	}
 
-	private void SetupAddChannel(User user, AlertSubscription sub,
-		List<AlertChannel>? existingChannels = null)
+	private void SetupAddChannel(
+		User user, 
+		AlertSubscription sub,
+		List<AlertChannel> existingChannels = null)
 	{
 		_users.GetByIdAsync(user.Id).Returns(user);
 		_subs.GetByIdAsync(sub.Id).Returns(sub);
@@ -418,7 +420,7 @@ public class SubscriptionServiceTests
 	[Fact]
 	public async Task RemoveChannel_ChannelNotFound_Fails()
 	{
-		_chans.GetByIdAsync(Arg.Any<Guid>()).Returns((AlertChannel?)null);
+		_chans.GetByIdAsync(Arg.Any<Guid>()).Returns(default(AlertChannel));
 
 		var result = await _service.RemoveChannelAsync(Guid.NewGuid(), Guid.NewGuid());
 

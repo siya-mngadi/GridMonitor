@@ -1,6 +1,7 @@
 ﻿using Asp.Versioning;
 using GridMonitor.Api.Mappers;
 using GridMonitor.Domain.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace GridMonitor.Api.Controllers;
@@ -18,6 +19,7 @@ public class ScheduleController : ControllerBase
 	}
 
 	[HttpGet("status")]
+	[AllowAnonymous]
 	public async ValueTask<IActionResult> GetCurrentStage()
 	{
 		var result = await scheduleService.GetCurrentStageAsync();

@@ -44,6 +44,7 @@ public partial class Program
 		// Add Keycloak authentication
 		builder.Services.AddKeycloakWebApiAuthentication(builder.Configuration);
 
+		// Add Keycloak authorization
 		builder.Services.AddKeycloakAuthorization(builder.Configuration);
 
 		// Add distributed memory cache

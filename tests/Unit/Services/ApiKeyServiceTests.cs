@@ -73,7 +73,7 @@ public class ApiKeyServiceTests
 	[Fact]
 	public async Task Issue_UserNotFound_Fails()
 	{
-		_users.GetByIdAsync(Arg.Any<Guid>()).Returns((User?)null);
+		_users.GetByIdAsync(Arg.Any<Guid>()).Returns(default(User));
 
 		var result = await _service.IssueAsync(Guid.NewGuid());
 
@@ -189,7 +189,7 @@ public class ApiKeyServiceTests
 	[Fact]
 	public async Task Revoke_KeyNotFound_Fails()
 	{
-		_keys.GetByIdAsync(Arg.Any<Guid>()).Returns((ApiKey?)null);
+		_keys.GetByIdAsync(Arg.Any<Guid>()).Returns(default(ApiKey));
 
 		var result = await _service.RevokeAsync(Guid.NewGuid(), Guid.NewGuid());
 

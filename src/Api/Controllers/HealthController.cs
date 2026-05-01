@@ -8,14 +8,14 @@ namespace GridMonitor.Api.Controllers;
 [ApiController]
 [ApiVersion("1.0")]
 [Route("api/v{version:apiVersion}")]
-public class GeneralController : ControllerBase
+public class HealthController : ControllerBase
 {
-	public GeneralController() { }
+	public HealthController() { }
 
 	[AllowAnonymous]
 	[HttpGet("health")]
 	public IActionResult GetHealth()
 	{
-		return Ok(new { status = "Ok", ts = DateTime.UtcNow });
+		return Ok(new { status = "Ok", at = DateTime.UtcNow });
 	}
 }

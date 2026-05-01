@@ -47,7 +47,7 @@ public class ApiKeyController : ControllerBase
 		return Ok(result.Value);
 	}
 
-	[HttpPost]
+	[HttpPost("regenerate")]
 	public async ValueTask<IActionResult> RegenerateApiKey([FromQuery] Guid apiKey)
 	{
 		var userId = HttpContext.Items["UserId"] as string;

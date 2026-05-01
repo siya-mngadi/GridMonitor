@@ -1,5 +1,6 @@
 ﻿using Asp.Versioning;
 using GridMonitor.Api.Mappers;
+using GridMonitor.Domain.Enums;
 using GridMonitor.Domain.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -35,8 +36,8 @@ public class UserController : ControllerBase
 		return Ok(mapper.ToResponse(result.Value!));
 	}
 
-	[HttpGet]
-	public async Task<IActionResult> GetUsage()
+	[HttpGet("usage")]
+	public async ValueTask<IActionResult> GetUsage()
 	{
 		var userId = HttpContext.Items["UserId"] as string;
 		if (!Guid.TryParse(userId, out var userGuid))
@@ -44,5 +45,34 @@ public class UserController : ControllerBase
 
 		var statsResult = await usageService.GetStatsAsync(userGuid);
 		return Ok(statsResult);
+	}
+
+
+	[HttpPatch("deactivate")]
+	public async ValueTask<IActionResult> DeactivateAsync()
+	{
+		var userId = HttpContext.Items["UserId"] as string;
+		if (!Guid.TryParse(userId, out var userGuid))
+			return Unauthorized();
+
+		var result = await userService.DeactivateAsync(userGuid);
+		if (!result.Success)
+			return BadRequest(new { error = result.Error });
+
+		return NoContent();
+	}
+
+	[HttpPatch("upgrade")]
+	public async ValueTask<IActionResult> UpgradeTierAsync([FromQuery] PricingTier newTier)
+	{
+		var userId = HttpContext.Items["UserId"] as string;
+		if (!Guid.TryParse(userId, out var userGuid))
+			return Unauthorized();
+
+		var result = await userService.UpgradeTierAsync(userGuid, newTier);
+		if (!result.Success)
+			return BadRequest(new { error = result.Error });
+
+		return NoContent();
 	}
 }

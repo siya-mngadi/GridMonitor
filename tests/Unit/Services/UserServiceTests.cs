@@ -5,7 +5,11 @@ using GridMonitor.Domain.Enums;
 using GridMonitor.Domain.Repositories;
 using GridMonitor.Domain.Shared;
 using GridMonitor.Tests.Unit.Shared;
+using Keycloak.AuthServices.Sdk;
+using Keycloak.AuthServices.Sdk.Admin;
+using Keycloak.AuthServices.Sdk.Admin.Models;
 using Microsoft.Extensions.Logging.Abstractions;
+using Microsoft.Extensions.Options;
 using NSubstitute;
 
 namespace GridMonitor.Tests.Unit.Services;
@@ -14,11 +18,20 @@ public class UserServiceTests
 {
 	private readonly IUserRepository _users = Substitute.For<IUserRepository>();
 	private readonly IApiKeyRepository _apiKeys = Substitute.For<IApiKeyRepository>();
+	private readonly IKeycloakUserClient _keycloak = Substitute.For<IKeycloakUserClient>();
 	private readonly UserService _userService;
 
 	public UserServiceTests()
 	{
-		_userService = new UserService(_users, _apiKeys, NullLogger<UserService>.Instance);
+		var options = new KeycloakAdminClientOptions
+		{
+			AuthServerUrl = "https://keycloak.local",
+			Realm = "my-realm",
+		};
+
+		var optionsMock = Substitute.For<IOptions<KeycloakAdminClientOptions>>();
+		optionsMock.Value.Returns(options);
+		_userService = new UserService(_users, _apiKeys, _keycloak, optionsMock, NullLogger<UserService>.Instance);
 	}
 
 	[Fact]
@@ -83,7 +96,17 @@ public class UserServiceTests
 	public async Task GetById_ExistingUser_ReturnsUser()
 	{
 		var user = GenerateMockObjects.User();
+		_keycloak.GetUserAsync(Arg.Any<string>(), Arg.Any<string>()).Returns(new UserRepresentation
+		{
+			Email = user.Email,
+			Enabled = user.Active,
+			Attributes = new Dictionary<string, ICollection<string>>
+			{
+				["pricing_tier"] = [user.Tier.ToString()]
+			}
+		});
 		_users.GetWithSubscriptionsAsync(user.Id).Returns(user);
+
 
 		var result = await _userService.GetByIdAsync(user.Id);
 
@@ -94,7 +117,8 @@ public class UserServiceTests
 	[Fact]
 	public async Task GetById_MissingUser_Fails()
 	{
-		_users.GetWithSubscriptionsAsync(Arg.Any<Guid>()).Returns((User?)null);
+		_keycloak.GetUserAsync(Arg.Any<string>(), Arg.Any<string>()).Returns(default(UserRepresentation));
+		_users.GetWithSubscriptionsAsync(Arg.Any<Guid>()).Returns(default(User));
 
 		var result = await _userService.GetByIdAsync(Guid.NewGuid());
 
@@ -141,7 +165,7 @@ public class UserServiceTests
 	[Fact]
 	public async Task UpgradeTier_UserNotFound_Fails()
 	{
-		_users.GetByIdAsync(Arg.Any<Guid>()).Returns((User?)null);
+		_users.GetByIdAsync(Arg.Any<Guid>()).Returns(default(User));
 
 		var result = await _userService.UpgradeTierAsync(Guid.NewGuid(), PricingTier.Starter);
 
@@ -167,8 +191,9 @@ public class UserServiceTests
 	public async Task Deactivate_ActiveUser_SetsUserInactive()
 	{
 		var user = GenerateMockObjects.User();
+		_keycloak.UpdateUserAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<UserRepresentation>()).Returns(Task.CompletedTask);
 		_users.GetByIdAsync(user.Id).Returns(user);
-		_apiKeys.GetApiKeysAsync(user.Id).Returns(new List<ApiKey>());
+		_apiKeys.GetApiKeysAsync(user.Id).Returns([]);
 
 		await _userService.DeactivateAsync(user.Id);
 
@@ -183,8 +208,9 @@ public class UserServiceTests
 		var k2 = GenerateMockObjects.ApiKey(user.Id, isActive: true);
 		var k3 = GenerateMockObjects.ApiKey(user.Id, isActive: false);
 
+		_keycloak.UpdateUserAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<UserRepresentation>()).Returns(Task.CompletedTask);
 		_users.GetByIdAsync(user.Id).Returns(user);
-		_apiKeys.GetApiKeysAsync(user.Id).Returns(new List<ApiKey> { k1, k2, k3 });
+		_apiKeys.GetApiKeysAsync(user.Id).Returns([k1, k2, k3]);
 
 		await _userService.DeactivateAsync(user.Id);
 
@@ -197,7 +223,8 @@ public class UserServiceTests
 	[Fact]
 	public async Task Deactivate_UserNotFound_Fails()
 	{
-		_users.GetByIdAsync(Arg.Any<Guid>()).Returns((User?)null);
+		_keycloak.UpdateUserAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<UserRepresentation>()).Returns(Task.CompletedTask);
+		_users.GetByIdAsync(Arg.Any<Guid>()).Returns(default(User));
 
 		var result = await _userService.DeactivateAsync(Guid.NewGuid());
 

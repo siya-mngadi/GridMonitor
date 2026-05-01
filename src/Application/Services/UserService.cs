@@ -3,7 +3,11 @@ using GridMonitor.Domain.Enums;
 using GridMonitor.Domain.Repositories;
 using GridMonitor.Domain.Services;
 using GridMonitor.Domain.Shared;
+using Keycloak.AuthServices.Sdk;
+using Keycloak.AuthServices.Sdk.Admin;
+using Keycloak.AuthServices.Sdk.Admin.Models;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 
 namespace GridMonitor.Application.Services;
 
@@ -11,21 +15,38 @@ public class UserService : IUserService
 {
 	private readonly IUserRepository userRepository;
 	private readonly IApiKeyRepository apiKeyRepository;
+	private readonly IKeycloakUserClient keycloakClient;
 	private readonly ILogger<UserService> logger;
+
+	private readonly KeycloakAdminClientOptions adminClientOptions;
 
 	public UserService(
 		IUserRepository usersRepository,
 		IApiKeyRepository apiKeysRepository,
+		IKeycloakUserClient keycloakClient,
+		IOptions<KeycloakAdminClientOptions> adminClientOptions,
 		ILogger<UserService> logger)
 	{
+		this.logger = logger;
 		this.userRepository = usersRepository;
 		this.apiKeyRepository = apiKeysRepository;
-		this.logger = logger;
+		this.keycloakClient = keycloakClient;
+		this.adminClientOptions = adminClientOptions.Value;
 	}
 
 	public async ValueTask<Result<User>> GetByIdAsync(Guid id, CancellationToken ct = default)
 	{
 		var user = await userRepository.GetWithSubscriptionsAsync(id, ct);
+
+		if(user == null) 
+			return Result<User>.Fail("User not found.");
+
+		var keycloakUser = await keycloakClient.GetUserAsync(adminClientOptions.Realm, user.KeycloakId, includeUserProfileMetadata:false, ct);
+
+		user.FirstName = keycloakUser?.FirstName;
+		user.LastName = keycloakUser?.LastName;
+		user.EmailVerified = keycloakUser?.EmailVerified ?? false;
+
 		return user is null
 			? Result<User>.Fail("User not found.")
 			: Result<User>.Ok(user);
@@ -52,21 +73,19 @@ public class UserService : IUserService
 			CreatedAt = DateTime.UtcNow
 		};
 
+		await keycloakClient.CreateUserAsync(adminClientOptions.Realm, new UserRepresentation
+		{
+			Username = user.Email,
+			Email = user.Email,
+			Enabled = true,
+			Attributes = new Dictionary<string, ICollection<string>>
+			{
+				{ "pricing_tier", [ user.Tier.ToString() ] }
+			}
+		}, ct);
+
 		await userRepository.AddAsync(user, ct);
 
-		// Provision a starter API key automatically on registration
-		//var (plain, hash, prefix) = ApiKeyHelper.Generate();
-		//var key = new ApiKey
-		//{
-		//	UserId = user.Id,
-		//	KeyHash = hash,
-		//	KeyPrefix = prefix,
-		//	Active = true,
-		//	DailyCallLimit = TierPolicy.DailyCallLimit("free"),
-		//	CreatedAt = DateTime.UtcNow
-		//};
-
-		//await apiKeyRepository.AddAsync(key, ct);
 		await userRepository.UnitOfWork.SaveEntitiesAsync(ct);
 
 		logger.LogInformation("User registered: {Email}", user.Email);
@@ -78,8 +97,11 @@ public class UserService : IUserService
 		var user = await userRepository.GetByIdAsync(userId, ct);
 		if (user is null) return Result.Fail("User not found.");
 
-		user.Active = false;
+		// Deactivate user account on Keycloak.
+		await keycloakClient.UpdateUserAsync(adminClientOptions.Realm, user.KeycloakId, new UserRepresentation { Enabled = false }, ct);
 
+		// Deactivate user in our system
+		user.Active = false;
 		// Deactivate all API keys — prevent further API access immediately
 		var keys = await apiKeyRepository.GetApiKeysAsync(userId, ct);
 		foreach (var k in keys) k.Active = false;
@@ -98,11 +120,23 @@ public class UserService : IUserService
 		var oldTier = user.Tier;
 		user.Tier = newTier;
 
+		var keycloakUser = new UserRepresentation
+		{
+			Attributes = new Dictionary<string, ICollection<string>>
+			{
+				{ "pricing_tier", [ newTier.ToString() ] }
+			}
+		};
+
+		// Update tier on Keycloak.
+		await keycloakClient.UpdateUserAsync(adminClientOptions.Realm, user.KeycloakId, keycloakUser, ct);
+
 		// Update daily call limits on all active API keys to reflect new tier
 		var keys = await apiKeyRepository.GetApiKeysAsync(userId, ct);
 		foreach (var k in keys.Where(k => k.Active))
 			k.DailyCallLimit = TierPolicy.DailyCallLimit(newTier);
 
+		// Update on our database
 		await userRepository.UnitOfWork.SaveEntitiesAsync(ct);
 		logger.LogInformation("User {Id} tier changed {Old} → {New}", userId, oldTier, newTier);
 		return Result.Ok();

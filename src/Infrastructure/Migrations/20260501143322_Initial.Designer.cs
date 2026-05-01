@@ -12,7 +12,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace GridMonitor.Infrastructure.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20260428112208_Initial")]
+    [Migration("20260501143322_Initial")]
     partial class Initial
     {
         /// <inheritdoc />
@@ -517,10 +517,19 @@ namespace GridMonitor.Infrastructure.Migrations
                         .HasMaxLength(200)
                         .HasColumnType("character varying(200)");
 
+                    b.Property<bool>("EmailVerified")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("FirstName")
+                        .HasColumnType("text");
+
                     b.Property<string>("KeycloakId")
                         .IsRequired()
                         .HasMaxLength(200)
                         .HasColumnType("character varying(200)");
+
+                    b.Property<string>("LastName")
+                        .HasColumnType("text");
 
                     b.Property<string>("Password")
                         .HasColumnType("text");
@@ -571,6 +580,7 @@ namespace GridMonitor.Infrastructure.Migrations
                     b.HasOne("GridMonitor.Domain.Entities.Suburb", "Suburb")
                         .WithMany()
                         .HasForeignKey("SuburbId")
+                        .HasPrincipalKey("EskomId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
@@ -613,6 +623,7 @@ namespace GridMonitor.Infrastructure.Migrations
                     b.HasOne("GridMonitor.Domain.Entities.Suburb", "Suburb")
                         .WithMany("Slots")
                         .HasForeignKey("SuburbId")
+                        .HasPrincipalKey("EskomId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 

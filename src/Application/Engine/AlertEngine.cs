@@ -17,8 +17,9 @@ public class AlertEngine
 	private readonly IAlertSubscriptionRepository subscriptionRepository;
 	private readonly IAlertLogRepository logRepository;
 	private readonly IStageSnapshotRepository snapshotRepository;
-	//	private readonly INotificationDispatcher dispatcher;
 	private readonly ILogger<AlertEngine> logger;
+
+	// TODO: add an alert dispatcher.
 
 	// Look forward far enough to catch the next check cycle too — prevents
 	// a slot slipping through the gap between two 5-minute runs.
@@ -31,13 +32,11 @@ public class AlertEngine
 		IAlertSubscriptionRepository subscriptionRepository,
 		IAlertLogRepository logRepository,
 		IStageSnapshotRepository snapshotRepository,
-		//	INotificationDispatcher dispatcher,
 		ILogger<AlertEngine> logger)
 	{
 		this.subscriptionRepository = subscriptionRepository;
 		this.logRepository = logRepository;
 		this.snapshotRepository = snapshotRepository;
-		//_dispatcher = dispatcher;
 		this.logger = logger;
 	}
 

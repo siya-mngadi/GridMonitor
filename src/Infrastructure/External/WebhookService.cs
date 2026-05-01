@@ -1,4 +1,5 @@
-﻿using Microsoft.Extensions.Logging;
+﻿using GridMonitor.Infrastructure.Proxies;
+using Microsoft.Extensions.Logging;
 using System.Text;
 using System.Text.Json;
 
@@ -6,10 +7,10 @@ namespace GridMonitor.Infrastructure.ExternalServices;
 
 public class WebhookService
 {
-	private readonly HttpClient httpClient;
+	private readonly WebhookClient httpClient;
 	private readonly ILogger<WebhookService> logger;
 
-	public WebhookService(HttpClient httpClient, ILogger<WebhookService> logger)
+	public WebhookService(WebhookClient httpClient, ILogger<WebhookService> logger)
 	{
 		this.httpClient = httpClient;
 		this.logger = logger;
@@ -43,7 +44,7 @@ public class WebhookService
 				// log or retry queue
 			}
 		}
-		catch (Exception ex)
+		catch (Exception)
 		{
 			// log error / retry queue
 		}
@@ -51,7 +52,7 @@ public class WebhookService
 
 	private string GenerateSignature(string payload)
 	{
-		// simple placeholder (use HMAC in production)
+		// Simple placeholder (use HMAC in production)
 		return Convert.ToBase64String(Encoding.UTF8.GetBytes(payload));
 	}
 }

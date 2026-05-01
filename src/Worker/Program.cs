@@ -1,4 +1,5 @@
 ﻿using GridMonitor.Domain.Repositories;
+using GridMonitor.Infrastructure.Proxies;
 using GridMonitor.Infrastructure.Repositories;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -42,7 +43,7 @@ public class Program
 
 		builder.Services.AddScoped<IGridService, GridService>();
 
-		builder.Services.AddHostedService<GridWorker>();
+		builder.Services.AddHostedService<MunicipalitySyncWorker>();
 		builder.Services.AddHostedService<MaintenanceWorker>();
 
 		var host = builder.Build();

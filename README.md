@@ -1,6 +1,6 @@
 # Grid Monitor
 
-GridMonitor is a solution for monitoring, managing, and alerting on grid resource usage. It is designed for extensibility, reliability, and ease of integration with external systems.
+GridMonitor is a solution for monitoring and alerting on grid outage (load shedding/reduction). It is designed for extensibility, reliability, and ease of integration with external systems.
 
 ## Features
 - Real-time grid status monitoring

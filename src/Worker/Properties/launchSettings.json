@@ -1,0 +1,10 @@
+{
+  "profiles": {
+    "GridMonitor.Worker": {
+      "commandName": "Project"
+    },
+    "Container (Dockerfile)": {
+      "commandName": "Docker"
+    }
+  }
+}

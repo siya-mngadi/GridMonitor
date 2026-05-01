@@ -53,7 +53,7 @@ public class ScheduleSyncWorker : BackgroundService
 
 			if (delay > TimeSpan.Zero)
 			{
-				logger.LogInformation("Next maintenance run at: {Next}", next);
+				logger.LogInformation("Next schedule slot run at: {Next}", next);
 				await Task.Delay(delay, stoppingToken);
 			}
 

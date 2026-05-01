@@ -7,6 +7,17 @@ services:
     ports:
       - "8020:8020"
 
+  gridmonitor-worker:
+    build:
+      context: .
+      dockerfile: src/Worker/Dockerfile
+    container_name: gridmonitor-worker
+    restart: unless-stopped
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+    volumes:
+      - ./logs:/app/logs
+
   postgres:
     image: postgres:15
     container_name: gridmonitor-db

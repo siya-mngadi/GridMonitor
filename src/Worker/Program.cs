@@ -44,6 +44,7 @@ public class Program
 		builder.Services.AddScoped<IGridService, GridService>();
 
 		builder.Services.AddHostedService<MunicipalitySyncWorker>();
+		builder.Services.AddHostedService<ScheduleSyncWorker>();
 		builder.Services.AddHostedService<MaintenanceWorker>();
 
 		var host = builder.Build();

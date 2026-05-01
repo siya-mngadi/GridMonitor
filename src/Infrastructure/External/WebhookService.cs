@@ -16,43 +16,15 @@ public class WebhookService
 		this.logger = logger;
 	}
 
-	public async Task SendWebhookAsync(string url, string eventType, object payload)
+	public async ValueTask SendWebhookAsync(string url, object payload, CancellationToken ct)
 	{
-		var body = new
-		{
-			eventType,
-			timestamp = DateTime.UtcNow,
-			data = payload
-		};
-
-		var json = JsonSerializer.Serialize(body);
-
-		var request = new HttpRequestMessage(HttpMethod.Post, url)
-		{
-			Content = new StringContent(json, Encoding.UTF8, "application/json")
-		};
-
-		request.Headers.Add("X-Webhook-Signature", GenerateSignature(json));
-
 		try
 		{
-			var response = await httpClient.SendAsync(request);
-
-			// optional: log failures
-			if (!response.IsSuccessStatusCode)
-			{
-				// log or retry queue
-			}
+			await httpClient.SendAsync(url, payload, ct);
 		}
 		catch (Exception)
 		{
 			// log error / retry queue
 		}
-	}
-
-	private string GenerateSignature(string payload)
-	{
-		// Simple placeholder (use HMAC in production)
-		return Convert.ToBase64String(Encoding.UTF8.GetBytes(payload));
 	}
 }
